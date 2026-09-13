@@ -26,27 +26,39 @@ npm run preview    # serve the production build
 src/
 ├─ main.ts                  # entry: boots scene, smooth scroll, nav, animations
 ├─ styles/main.css          # tokens, layout, sections
+├─ data/
+│  └─ skills.ts             # skill areas + shared expertise→color formula
 ├─ three/
-│  ├─ config.ts             # tuning constants (camera, planet, controls)
-│  ├─ Experience.ts         # renderer, camera, lights, resize, render loop, dispose
-│  ├─ Planet.ts             # sphere mesh + graticule overlay in one group
+│  ├─ config.ts             # tuning constants (camera fit, planet, regions, controls)
+│  ├─ Experience.ts         # renderer, camera, lights, resize/fit, render loop, dispose
+│  ├─ Planet.ts             # the planet group: skill regions + float
 │  ├─ PlanetControls.ts     # drag-to-rotate with inertia + idle spin
-│  └─ graticule.ts          # lat/long line grid (1 draw call)
+│  └─ skillRegions.ts       # spherical-Voronoi carve: 1 mesh per skill
 ├─ animations/
 │  ├─ gsap.ts               # single ScrollTrigger registration point
-│  └─ scrollAnimations.ts   # hero intro, reveals, scrubbed planet dimming
+│  └─ scrollAnimations.ts   # hero intro, reveals, planet scale flourish
 └─ ui/
    ├─ smoothScroll.ts       # Lenis <-> GSAP ticker integration
+   ├─ skillLegend.ts        # legend built from the same skill data
    └─ nav.ts                # smooth in-page anchors
 ```
 
-## Planet controls (step 1)
+## Planet (step 2)
 
-Pointer events on the fixed canvas: 1:1 rotation while dragging (yaw free, pitch clamped
-to ±60°), velocity estimated from pointer deltas, exponential inertia decay after release
-that settles into the slow idle spin. `touch-action: pan-y` keeps vertical page scrolling
-usable on touch devices; `pointer-events` on the page passes through empty areas so the
-planet stays draggable.
+- **Its own section** — the canvas lives inside `#planet` (the second section): dead-center,
+  sized by a camera fit so the sphere spans ~86% of the viewport height (width-fit fallback
+  on portrait screens). Sizes come from the canvas element, not the window.
+- **Skill countries** — the sphere is carved by a spherical Voronoi over a 5120-face
+  icosphere: every face joins its nearest skill seed (noise-warped "coastlines"), then
+  faces merge into **one flat-shaded mesh per skill** (~10 draw calls total). Expertise
+  buys territory (1–3 seeds per skill) and deepens the tint via the shared formula in
+  `data/skills.ts`.
+- **Legend** — generated from the same data module, so swatch colors match the countries
+  exactly.
+- **Drag** — pointer events on the canvas: 1:1 rotation while dragging (yaw free, pitch
+  clamped to ±60°), velocity-based inertia after release that settles into the idle spin.
+  `touch-action: pan-y` keeps vertical page scrolling usable on touch devices.
+- Region meshes carry `userData.skillId` — ready for the raycast hover + info card step.
 
 ## HMR behaviour
 
@@ -58,7 +70,7 @@ planet stays draggable.
 ## Roadmap
 
 - [x] **Step 1** — scaffold + draggable, auto-rotating planet
-- [ ] **Step 2** — skill "countries": polygon regions on the sphere
+- [x] **Step 2** — skill "countries": polygon regions on the sphere
 - [ ] **Step 3** — raycast hover: expertise tint + info card
 - [ ] **Step 4** — scroll-driven choreography of the planet through sections
 - [ ] **Step 5** — polish: atmosphere fresnel shader, starfield, reduced-motion support

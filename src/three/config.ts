@@ -8,20 +8,28 @@ export const CAMERA = {
   fov: 42,
   near: 0.1,
   far: 60,
-  position: { x: 0, y: 0.12, z: 4.6 },
-  mobileZ: 5.4,
-  offsetX: 0.85,
+  // The planet must fill ≥ 80% of the window: the camera distance is fitted
+  // to these fractions (height-first, width fallback on portrait screens).
+  fit: {
+    heightFraction: 0.86,
+    widthFraction: 0.9,
+  },
 } as const;
 
 export const PLANET = {
   radius: 1.15,
-  segments: 96,
-  baseColor: 0x1d2a4d,
-  gridColor: 0x5ad1ff,
-  graticule: { latBands: 9, meridians: 12, opacity: 0.16 },
   initialTilt: 0.42,
   floatAmplitude: 0.05,
   floatSpeed: 0.55,
+} as const;
+
+export const REGIONS = {
+  // Icosahedron subdivisions: 4 → 5120 faces partitioned among the skills.
+  detail: 4,
+  // Border wobble (radians added to seed distances) — organic "coastlines".
+  borderNoise: 0.09,
+  // Deterministic seed jitter so countries aren't perfectly symmetric.
+  seedJitter: 0.22,
 } as const;
 
 export const PLANET_CONTROLS = {

@@ -1,7 +1,9 @@
 import './styles/main.css';
 import { initSectionAnimations } from './animations/scrollAnimations';
+import { SKILL_AREAS } from './data/skills';
 import { Experience } from './three/Experience';
 import { initAnchorNavigation } from './ui/nav';
+import { renderSkillLegend } from './ui/skillLegend';
 import { initSmoothScroll } from './ui/smoothScroll';
 
 let activeExperience: Experience | null = null;
@@ -19,7 +21,7 @@ function boot(): void {
   }
 
   try {
-    activeExperience = new Experience(canvas);
+    activeExperience = new Experience(canvas, SKILL_AREAS);
   } catch (error) {
     console.error('[mosy.dev] WebGL init failed:', error);
     document.body.classList.add('no-webgl');
@@ -28,7 +30,14 @@ function boot(): void {
 
   const lenis = initSmoothScroll();
   initAnchorNavigation(lenis);
-  initSectionAnimations();
+
+  // Legend must exist before animations run so its items get revealed.
+  const legend = document.querySelector<HTMLElement>('#skill-legend');
+  if (legend) {
+    renderSkillLegend(legend);
+  }
+
+  initSectionAnimations(activeExperience.planet.object3D);
 }
 
 boot();

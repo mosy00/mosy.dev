@@ -1,43 +1,24 @@
-import { Group, Mesh, SphereGeometry, type BufferGeometry, type Material, MeshStandardMaterial } from 'three';
+import { Group } from 'three';
+import type { SkillArea } from '../data/skills';
 import { PLANET } from './config';
-import { createGraticule } from './graticule';
-
+import { buildSkillRegions, type SkillRegionBuild } from './skillRegions';
 
 /**
- * The skills planet: one sphere mesh + a graticule overlay, wrapped in a
- * group that drag controls rotate. Skill "countries" will be attached to
- * this same group in a later step.
+ * The skills planet: the whole surface is carved into skill "countries" —
+ * one flat-shaded mesh per skill area, merged from spherical-Voronoi faces.
+ * Drag controls rotate this group; region meshes carry userData.skillId
+ * ready for the raycast hover work in the next step.
  */
 export class Planet {
   public readonly object3D = new Group();
-  private readonly surfaceGeometry: SphereGeometry;
-  private readonly graticuleGeometry: BufferGeometry;
-  private readonly materials: Material[] = [];
+  private readonly regions: SkillRegionBuild;
   private elapsedTime = 0;
 
-  constructor() {
-    const { radius, segments } = PLANET;
-
-    this.surfaceGeometry = new SphereGeometry(radius, segments, segments);
-    const surfaceMaterial = new MeshStandardMaterial({
-      color: PLANET.baseColor,
-      roughness: 0.5,
-      metalness: 0.3,
-    });
-    this.materials.push(surfaceMaterial);
-    const surface = new Mesh(this.surfaceGeometry, surfaceMaterial);
-
-    const graticule = createGraticule({
-      radius: radius * 1.004,
-      latBands: PLANET.graticule.latBands,
-      meridians: PLANET.graticule.meridians,
-      color: PLANET.gridColor,
-      opacity: PLANET.graticule.opacity,
-    });
-    this.graticuleGeometry = graticule.geometry;
-    this.materials.push(graticule.material);
-
-    this.object3D.add(surface, graticule.line);
+  constructor(skills: readonly SkillArea[]) {
+    this.regions = buildSkillRegions(skills);
+    for (const mesh of this.regions.meshes) {
+      this.object3D.add(mesh);
+    }
     this.object3D.rotation.x = PLANET.initialTilt;
   }
 
@@ -47,11 +28,8 @@ export class Planet {
   }
 
   dispose(): void {
-    this.surfaceGeometry.dispose();
-    this.graticuleGeometry.dispose();
-    for (const material of this.materials) {
-      material.dispose();
-    }
+    this.regions.dispose();
     this.object3D.clear();
   }
 }
+

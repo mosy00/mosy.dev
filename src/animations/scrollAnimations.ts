@@ -1,11 +1,14 @@
+import type { Object3D } from 'three';
 import { gsap, ScrollTrigger } from './gsap';
 
+/** Scale the planet sits at while its section is off-screen. */
+const PLANET_HIDDEN_SCALE = 0.88;
+
 /**
- * Scroll choreography, step 1: a hero intro timeline, per-element
- * ScrollTrigger reveals and a scrubbed dim of the planet as the page
- * scrolls into the content sections (it returns at the footer).
+ * Scroll choreography, step 2: hero intro, per-element ScrollTrigger
+ * reveals, and a scale flourish when the skills planet scrolls into view.
  */
-export function initSectionAnimations(): () => void {
+export function initSectionAnimations(planet: Object3D | null): () => void {
   const heroIntro = gsap.timeline({ defaults: { ease: 'power3.out' } });
   heroIntro.from('[data-hero]', {
     y: 36,
@@ -31,17 +34,33 @@ export function initSectionAnimations(): () => void {
       }),
     );
 
-  // Dim the planet while reading the content sections.
-  gsap.to('#webgl', {
-    opacity: 0.22,
-    ease: 'none',
-    scrollTrigger: { trigger: '#manifesto', start: 'top 85%', end: 'top 25%', scrub: true },
-  });
-  gsap.to('#webgl', {
-    opacity: 1,
-    ease: 'none',
-    scrollTrigger: { trigger: '#contact', start: 'top 95%', end: 'top 45%', scrub: true },
-  });
+  if (planet) {
+    gsap.set(planet.scale, { x: PLANET_HIDDEN_SCALE, y: PLANET_HIDDEN_SCALE, z: PLANET_HIDDEN_SCALE });
+    ScrollTrigger.create({
+      trigger: '#planet',
+      start: 'top 60%',
+      onEnter: () => {
+        gsap.to(planet.scale, {
+          x: 1,
+          y: 1,
+          z: 1,
+          duration: 1.5,
+          ease: 'elastic.out(1, 0.65)',
+          overwrite: true,
+        });
+      },
+      onLeaveBack: () => {
+        gsap.to(planet.scale, {
+          x: PLANET_HIDDEN_SCALE,
+          y: PLANET_HIDDEN_SCALE,
+          z: PLANET_HIDDEN_SCALE,
+          duration: 0.6,
+          ease: 'power2.out',
+          overwrite: true,
+        });
+      },
+    });
+  }
 
   // Layout shifts once webfonts land — recalc trigger positions.
   document.fonts.ready.then(() => ScrollTrigger.refresh());
@@ -52,7 +71,10 @@ export function initSectionAnimations(): () => void {
       tween.scrollTrigger?.kill();
       tween.kill();
     });
-    gsap.killTweensOf('#webgl');
     ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+    if (planet) {
+      gsap.killTweensOf(planet.scale);
+    }
+    gsap.killTweensOf('[data-reveal], [data-hero]');
   };
 }

@@ -3,29 +3,35 @@ import {
   Clock,
   DirectionalLight,
   HemisphereLight,
+  MathUtils,
   PerspectiveCamera,
   Scene,
   WebGLRenderer,
   type Light,
 } from 'three';
-import { CAMERA, RENDERER } from './config';
+import type { SkillArea } from '../data/skills';
+import { CAMERA, PLANET, RENDERER } from './config';
 import { Planet } from './Planet';
 import { PlanetControls } from './PlanetControls';
 
 /**
- * Owns the renderer, scene, camera, lights and the render loop.
- * The planet stays fixed behind the page content (the canvas is
- * position: fixed) and reacts to pointer drags with inertia.
+ * Owns the renderer, scene, camera, lights and the render loop. The canvas
+ * lives inside the planet section: sizes come from the canvas element (not
+ * the window) and the camera distance is fitted so the planet covers most
+ * of the section while staying dead-center.
  */
 export class Experience {
+  public readonly planet: Planet;
+  private readonly canvas: HTMLCanvasElement;
   private readonly renderer: WebGLRenderer;
   private readonly scene = new Scene();
   private readonly camera: PerspectiveCamera;
-  private readonly planet = new Planet();
   private readonly controls: PlanetControls;
   private readonly clock = new Clock();
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, skills: readonly SkillArea[]) {
+    this.canvas = canvas;
+    this.planet = new Planet(skills);
     this.renderer = new WebGLRenderer({
       canvas,
       antialias: true,
@@ -33,18 +39,11 @@ export class Experience {
       powerPreference: 'high-performance',
     });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, RENDERER.maxPixelRatio));
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setClearColor(RENDERER.clearColor, RENDERER.clearAlpha);
     this.renderer.toneMapping = ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.1;
 
-    this.camera = new PerspectiveCamera(
-      CAMERA.fov,
-      window.innerWidth / window.innerHeight,
-      CAMERA.near,
-      CAMERA.far,
-    );
-    this.camera.position.set(CAMERA.position.x, CAMERA.position.y, CAMERA.position.z);
+    this.camera = new PerspectiveCamera(CAMERA.fov, 1, CAMERA.near, CAMERA.far);
 
     this.scene.add(this.planet.object3D, ...this.createLights());
 
@@ -79,15 +78,22 @@ export class Experience {
     this.renderer.render(this.scene, this.camera);
   };
 
+  /**
+   * Fits the planet to the canvas: the sphere spans `fit.heightFraction` of
+   * the viewport height (portrait screens fall back to a width fit) and the
+   * camera always looks straight at the centered planet.
+   */
   private readonly handleResize = (): void => {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+    const width = Math.max(this.canvas.clientWidth, 1);
+    const height = Math.max(this.canvas.clientHeight, 1);
+    this.renderer.setSize(width, height, false);
+
     const aspect = width / height;
-    this.renderer.setSize(width, height);
     this.camera.aspect = aspect;
+    const halfFov = MathUtils.degToRad(CAMERA.fov / 2);
+    const fitHeight = PLANET.radius / (CAMERA.fit.heightFraction * Math.tan(halfFov));
+    const fitWidth = PLANET.radius / (CAMERA.fit.widthFraction * Math.tan(halfFov) * aspect);
+    this.camera.position.set(0, 0, Math.max(fitHeight, fitWidth));
     this.camera.updateProjectionMatrix();
-    const isLandscape = aspect > 1;
-    this.planet.object3D.position.x = isLandscape ? CAMERA.offsetX : 0;
-    this.camera.position.z = isLandscape ? CAMERA.position.z : CAMERA.mobileZ;
   };
 }
