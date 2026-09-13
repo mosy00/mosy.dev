@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Mosy — creative developer. Interactive portfolio with a 3D skills planet built on three.js, GSAP and Lenis."
+    />
+    <title>mosy.dev — creative developer</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script type="module" src="/src/main.ts"></script>
+  </head>
+  <body>
+    <div class="backdrop-glow" aria-hidden="true"></div>
+    <canvas id="webgl" aria-hidden="true"></canvas>
+    <div class="grain" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <a class="site-header__logo" href="#top">mosy<span>.dev</span></a>
+      <nav class="site-header__nav" aria-label="Primary">
+        <a href="#manifesto">Manifesto</a>
+        <a href="#work">Work</a>
+        <a href="#planet">Planet</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <a class="site-header__cta" href="#contact">Say hi</a>
+    </header>
+
+    <main>
+      <section class="hero" id="top" aria-label="Intro">
+        <div class="hero__inner">
+          <p class="hero__kicker" data-hero>Creative developer — portfolio, vol. 1</p>
+          <h1 class="hero__title" data-hero>
+            <span class="hero__title-solid">Mosy</span><span class="hero__title-hollow">.dev</span>
+          </h1>
+          <p class="hero__lede" data-hero>
+            I build interactive worlds for the web — 3D scenes, motion and
+            interfaces that feel alive. Currently sculpting a skills planet
+            out of polygons and physics.
+          </p>
+          <div class="hero__actions" data-hero>
+            <a class="button button--solid" href="#work">See the work</a>
+            <a class="button button--ghost" href="#planet">The skills planet</a>
+          </div>
+        </div>
+        <p class="hero__hint" data-hero aria-hidden="true">drag the planet to rotate</p>
+        <div class="hero__meta" data-hero>
+          <span>scroll to explore ↓</span>
+          <span>portfolio v0.1 — planet under construction</span>
+        </div>
+      </section>
+
+      <section class="statement" id="manifesto" aria-label="Manifesto">
+        <p class="statement__line" data-reveal>Code is a <em>material</em>.</p>
+        <p class="statement__line statement__line--indent" data-reveal>I bend it into <em>motion</em>.</p>
+        <p class="statement__note" data-reveal>three.js · gsap · lenis · typescript — no frameworks were harmed</p>
+      </section>
+
+      <section class="work" id="work" aria-label="Selected work">
+        <header class="work__head" data-reveal>
+          <span class="work__index">01</span>
+          <h2 class="work__title">Selected work</h2>
+        </header>
+        <ul class="work__list">
+          <li class="work__row" data-reveal>
+            <span class="work__num">001</span>
+            <span class="work__name">Skills planet</span>
+            <span class="work__tags">three.js / shaders / gsap</span>
+            <span class="work__year">2026</span>
+          </li>
+          <li class="work__row" data-reveal>
+            <span class="work__num">002</span>
+            <span class="work__name">WebGL experiments</span>
+            <span class="work__tags">webgl / generative</span>
+            <span class="work__year">soon</span>
+          </li>
+          <li class="work__row" data-reveal>
+            <span class="work__num">003</span>
+            <span class="work__name">This very site</span>
+            <span class="work__tags">vite / vanilla ts</span>
+            <span class="work__year">v0.1</span>
+          </li>
+        </ul>
+      </section>
+
+      <section class="planet" id="planet" aria-label="Skills planet status">
+        <div class="planet__head" data-reveal>
+          <span class="work__index">02</span>
+          <h2 class="planet__title">The skills planet is under construction</h2>
+        </div>
+        <ul class="planet__list">
+          <li class="planet__item" data-reveal>
+            <span class="planet__step">01</span>
+            <p>Continent-shaped skill regions carved as meshes on the sphere's surface</p>
+            <span class="planet__status is-active">next up</span>
+          </li>
+          <li class="planet__item" data-reveal>
+            <span class="planet__step">02</span>
+            <p>Raycast hover, expertise-tinted regions and skill info cards</p>
+            <span class="planet__status">planned</span>
+          </li>
+          <li class="planet__item" data-reveal>
+            <span class="planet__step">03</span>
+            <p>A scroll-driven journey around the globe with GSAP + Lenis</p>
+            <span class="planet__status">planned</span>
+          </li>
+        </ul>
+      </section>
+
+      <footer class="footer" id="contact" aria-label="Contact">
+        <p class="footer__kicker" data-reveal>Got an idea?</p>
+        <a class="footer__mail" href="mailto:hello@mosy.dev" data-reveal>
+          Let's make<br /><span>something unreal</span>
+        </a>
+        <a class="footer__address" href="mailto:hello@mosy.dev" data-reveal>hello@mosy.dev</a>
+        <div class="footer__meta" data-reveal>
+          <span>© 2026 mosy.dev</span>
+          <span>built with three.js · gsap · lenis</span>
+          <a href="#top">back to top ↑</a>
+        </div>
+      </footer>
+    </main>
+
+    <div class="webgl-fallback" role="alert">
+      <p>This experience needs WebGL — your browser said no.</p>
+    </div>
+  </body>
+</html>
