@@ -22,12 +22,13 @@ import { PlanetControls } from './PlanetControls';
  */
 export class Experience {
   public readonly planet: Planet;
+  public readonly camera: PerspectiveCamera;
+  public readonly controls: PlanetControls;
   private readonly canvas: HTMLCanvasElement;
   private readonly renderer: WebGLRenderer;
   private readonly scene = new Scene();
-  private readonly camera: PerspectiveCamera;
-  private readonly controls: PlanetControls;
   private readonly clock = new Clock();
+
 
   constructor(canvas: HTMLCanvasElement, skills: readonly SkillArea[]) {
     this.canvas = canvas;

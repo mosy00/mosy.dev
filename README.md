@@ -33,32 +33,38 @@ src/
 │  ├─ Experience.ts         # renderer, camera, lights, resize/fit, render loop, dispose
 │  ├─ Planet.ts             # the planet group: skill regions + float
 │  ├─ PlanetControls.ts     # drag-to-rotate with inertia + idle spin
-│  └─ skillRegions.ts       # spherical-Voronoi carve: 1 mesh per skill
+│  ├─ PlanetInteraction.ts  # raycast hover → skill highlight callbacks
+│  └─ skillRegions.ts       # spherical-Voronoi islands: 1 mesh per skill
 ├─ animations/
 │  ├─ gsap.ts               # single ScrollTrigger registration point
 │  └─ scrollAnimations.ts   # hero intro, reveals, planet scale flourish
 └─ ui/
    ├─ smoothScroll.ts       # Lenis <-> GSAP ticker integration
-   ├─ skillLegend.ts        # legend built from the same skill data
+   ├─ skillLegend.ts        # legend built from the same skill data (hover-synced)
+   ├─ infoCard.ts           # hovered-skill info card
    └─ nav.ts                # smooth in-page anchors
 ```
 
-## Planet (step 2)
+## Planet (steps 2–3)
 
 - **Its own section** — the canvas lives inside `#planet` (the second section): dead-center,
   sized by a camera fit so the sphere spans ~86% of the viewport height (width-fit fallback
   on portrait screens). Sizes come from the canvas element, not the window.
-- **Skill countries** — the sphere is carved by a spherical Voronoi over a 5120-face
-  icosphere: every face joins its nearest skill seed (noise-warped "coastlines"), then
-  faces merge into **one flat-shaded mesh per skill** (~10 draw calls total). Expertise
-  buys territory (1–3 seeds per skill) and deepens the tint via the shared formula in
-  `data/skills.ts`.
-- **Legend** — generated from the same data module, so swatch colors match the countries
-  exactly.
+- **Ocean & islands** — a smooth, glossy deep-navy ocean sphere; skills are raised island
+  meshes carved by a spherical Voronoi over a 20k-face icosphere (noise-warped coastlines),
+  merged into **one mesh per skill** (~11 draw calls total). Expertise buys territory
+  (island radius + 1–3 seeds per skill) and deepens the tint via the shared formula in
+  `data/skills.ts`. Most of the globe stays open ocean on purpose, so the lands read
+  clearly as "skills".
+- **Hover (step 3)** — a raycaster picks the island under the pointer (suppressed while
+  dragging): the active island glows (GSAP-tweened emissive), the rest dim, the legend row
+  lights up, and an info card shows name, blurb and an expertise meter. Legend rows are
+  buttons, so keyboard focus triggers the same highlight.
 - **Drag** — pointer events on the canvas: 1:1 rotation while dragging (yaw free, pitch
   clamped to ±60°), velocity-based inertia after release that settles into the idle spin.
   `touch-action: pan-y` keeps vertical page scrolling usable on touch devices.
-- Region meshes carry `userData.skillId` — ready for the raycast hover + info card step.
+- Island meshes carry `userData.skillId` — the raycaster and the legend both resolve
+  through one hover pipeline in `main.ts`.
 
 ## HMR behaviour
 
@@ -71,7 +77,7 @@ src/
 
 - [x] **Step 1** — scaffold + draggable, auto-rotating planet
 - [x] **Step 2** — skill "countries": polygon regions on the sphere
-- [ ] **Step 3** — raycast hover: expertise tint + info card
+- [x] **Step 3** — raycast hover: expertise tint + info card
 - [ ] **Step 4** — scroll-driven choreography of the planet through sections
 - [ ] **Step 5** — polish: atmosphere fresnel shader, starfield, reduced-motion support
 

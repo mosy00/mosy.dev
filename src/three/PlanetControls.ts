@@ -48,6 +48,11 @@ export class PlanetControls {
     this.velocity.y += (PLANET_CONTROLS.idleSpeed - this.velocity.y) * settle;
   }
 
+  /** True while the user is dragging — hover raycasts are suppressed then. */
+  get isDragging(): boolean {
+    return this.dragging;
+  }
+
   dispose(): void {
     const element = this.domElement;
     element.removeEventListener('pointerdown', this.onPointerDown);
