@@ -1,4 +1,5 @@
 import './styles/main.css';
+import { initPlanetTour } from './animations/planetTour';
 import { initSectionAnimations } from './animations/scrollAnimations';
 import { SKILL_AREAS } from './data/skills';
 import { Experience } from './three/Experience';
@@ -10,9 +11,12 @@ import { initSmoothScroll } from './ui/smoothScroll';
 
 let activeExperience: Experience | null = null;
 let activeInteraction: PlanetInteraction | null = null;
+let disposeTour: (() => void) | null = null;
 
 /** Teardown hook — kept for future HMR handling / programmatic resets. */
 export function disposeExperience(): void {
+  disposeTour?.();
+  disposeTour = null;
   activeInteraction?.dispose();
   activeInteraction = null;
   activeExperience?.dispose();
@@ -37,8 +41,9 @@ function boot(): void {
   initAnchorNavigation(lenis);
 
   const planetSection = document.querySelector<HTMLElement>('#planet');
+  const stage = planetSection?.querySelector<HTMLElement>('.planet__stage');
   const legendHost = document.querySelector<HTMLElement>('#skill-legend');
-  const infoCard = planetSection ? new InfoCard(planetSection) : null;
+  const infoCard = stage ? new InfoCard(stage) : null;
 
   // One hover pipeline shared by the raycaster and the legend rows.
   let applyHover: (skillId: string | null) => void = () => {};
@@ -70,6 +75,7 @@ function boot(): void {
 
   // Legend must exist before animations run so its items get revealed.
   initSectionAnimations(activeExperience.planet.object3D);
+  disposeTour = initPlanetTour(activeExperience.planet);
 }
 
 boot();

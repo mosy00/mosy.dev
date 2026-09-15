@@ -48,7 +48,7 @@ export class Experience {
 
     this.scene.add(this.planet.object3D, ...this.createLights());
 
-    this.controls = new PlanetControls({ domElement: canvas, target: this.planet.object3D });
+    this.controls = new PlanetControls({ domElement: canvas, target: this.planet.controlsTarget });
 
     this.handleResize();
     window.addEventListener('resize', this.handleResize);

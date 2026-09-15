@@ -11,8 +11,10 @@ import { skillColorHSL, type SkillArea } from '../data/skills';
 import { HIGHLIGHT, PLANET, REGIONS } from './config';
 
 export interface SkillIslandsBuild {
-  /** One merged smooth-shaded mesh per skill — its island(s) on the globe. */
+  /** One merged smooth-shaded mesh per skill — its landmass on the globe. */
   readonly meshes: Mesh[];
+  /** One representative direction per skill (primary seed) — tour targets. */
+  readonly skillDirections: readonly Vector3[];
   dispose(): void;
 }
 
@@ -37,38 +39,57 @@ function boundaryWarp(centroid: Vector3, seed: Vector3): number {
 }
 
 /**
- * Raises skill islands out of the ocean: a face of the icosphere becomes
- * land of a skill when its (noise-warped) distance to one of that skill's
- * seeds is inside the seed's island radius — everything else stays ocean.
- * Expertise buys radius (and 1–3 seeds), so expert skills form continents.
+ * Raises skill landmasses out of the ocean. Each skill gets ONE connected
+ * landmass: a primary seed on a latitude-banded Fibonacci lattice plus
+ * satellites clustered around it (so their caps always merge), all grown
+ * by a noise-warped island radius scaled with expertise. Everything else
+ * stays open ocean.
  */
 export function buildSkillIslands(skills: readonly SkillArea[]): SkillIslandsBuild {
   const base = new IcosahedronGeometry(1, REGIONS.detail);
   const basePositions = base.getAttribute('position');
   const faceCount = Math.floor(basePositions.count / 3);
 
-  // 1. Seeds: Fibonacci-distributed, jittered for asymmetry.
+  // 1. Seeds: primary + clustered satellites per skill.
   const seeds: Seed[] = [];
+  const skillDirections: Vector3[] = [];
   const goldenAngle = Math.PI * (3 - Math.sqrt(5));
-  const totalSeeds = skills.reduce((sum, skill) => sum + (1 + Math.round(skill.expertise * 2)), 0);
-  let seedCounter = 0;
+  const maxLatitude = (REGIONS.maxLatitude * Math.PI) / 180;
   skills.forEach((skill, skillIndex) => {
     const quota = 1 + Math.round(skill.expertise * 2);
     const islandRadius =
       REGIONS.islandRadius.min + (REGIONS.islandRadius.max - REGIONS.islandRadius.min) * skill.expertise;
-    for (let q = 0; q < quota; q += 1) {
-      const y = 1 - ((seedCounter + 0.5) / totalSeeds) * 2;
-      const ring = Math.sqrt(Math.max(1 - y * y, 0));
-      const theta = goldenAngle * seedCounter;
-      const direction = new Vector3(
-        Math.cos(theta) * ring + (pseudoRandom(seedCounter * 3) - 0.5) * REGIONS.seedJitter,
-        y + (pseudoRandom(seedCounter * 3 + 1) - 0.5) * REGIONS.seedJitter,
-        Math.sin(theta) * ring + (pseudoRandom(seedCounter * 3 + 2) - 0.5) * REGIONS.seedJitter,
-      ).normalize();
+
+    const bandY = 1 - ((skillIndex + 0.5) / skills.length) * 2;
+    const y = Math.sin(maxLatitude) * bandY;
+    const ring = Math.sqrt(Math.max(1 - y * y, 0));
+    const theta = goldenAngle * skillIndex;
+    const primary = new Vector3(
+      Math.cos(theta) * ring + (pseudoRandom(skillIndex * 7) - 0.5) * REGIONS.seedJitter,
+      y + (pseudoRandom(skillIndex * 7 + 1) - 0.5) * REGIONS.seedJitter * 0.5,
+      Math.sin(theta) * ring + (pseudoRandom(skillIndex * 7 + 2) - 0.5) * REGIONS.seedJitter,
+    ).normalize();
+    seeds.push({ direction: primary, skillIndex, islandRadius });
+    skillDirections.push(primary.clone());
+
+    for (let q = 1; q < quota; q += 1) {
+      const rand = (n: number): number => pseudoRandom(skillIndex * 31 + q * 3 + n);
+      const scatter = new Vector3(rand(0) - 0.5, rand(1) - 0.5, rand(2) - 0.5);
+      if (scatter.lengthSq() < 1e-4) {
+        scatter.set(0.5, 0.5, 0.5);
+      }
+      scatter.normalize();
+      const tangent = scatter.sub(primary.clone().multiplyScalar(scatter.dot(primary)));
+      if (tangent.lengthSq() < 1e-4) {
+        tangent.set(-primary.y, primary.x, 0);
+      }
+      tangent.normalize();
+      const offset = islandRadius * REGIONS.satelliteOffset * (0.55 + 0.45 * rand(3));
+      const direction = primary.clone().add(tangent.multiplyScalar(offset)).normalize();
       seeds.push({ direction, skillIndex, islandRadius });
-      seedCounter += 1;
     }
   });
+
 
   // 2. Faces inside a (noise-warped) island radius become that skill's land.
   const buckets: number[][] = Array.from({ length: skills.length }, () => []);
@@ -143,6 +164,7 @@ export function buildSkillIslands(skills: readonly SkillArea[]): SkillIslandsBui
 
   return {
     meshes,
+    skillDirections,
     dispose(): void {
       for (const mesh of meshes) {
         mesh.geometry.dispose();

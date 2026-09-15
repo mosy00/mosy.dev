@@ -27,20 +27,27 @@ export const REGIONS = {
   // Icosphere subdivisions: 5 → 20480 faces — smooth coastlines.
   detail: 5,
   // Border wobble (radians added to seed distances) — organic coastlines.
-  borderNoise: 0.08,
+  borderNoise: 0.06,
   // Deterministic seed jitter so islands aren't perfectly symmetric.
   seedJitter: 0.22,
   // Angular radius of one seed's island, scaled by expertise.
-  islandRadius: { min: 0.1, max: 0.24 },
+  islandRadius: { min: 0.12, max: 0.26 },
   // How far islands are raised above the ocean sphere.
   raise: 1.02,
+  // Satellite seeds cluster this close (× island radius) to the primary
+  // seed, so a skill's caps always merge into ONE connected landmass.
+  satelliteOffset: 0.7,
+  // Seeds stay within this latitude band (degrees from the equator) so the
+  // scroll tour can face every island without tilting the poles.
+  maxLatitude: 42,
 } as const;
 
 export const OCEAN = {
   segments: 128,
-  color: 0x0a1633,
-  roughness: 0.3,
-  metalness: 0.35,
+  // Earth-like light blue so the islands read as land against sea.
+  color: 0x3d8fd1,
+  roughness: 0.28,
+  metalness: 0.25,
 } as const;
 
 export const HIGHLIGHT = {
@@ -52,10 +59,21 @@ export const HIGHLIGHT = {
 
 export const PLANET_CONTROLS = {
   rotationPerPixel: 0.0055,
-  maxPitch: Math.PI / 3,
+  // Earth simulation: free spin left/right, but the poles stay up/down —
+  // vertical drag is clamped to ±45°.
+  maxPitch: Math.PI / 4,
   idleSpeed: 0.12,
   damping: 1.8,
   settleRate: 1.1,
   velocitySmoothing: 0.35,
   minPointerDt: 0.001,
 } as const;
+
+export const TOUR = {
+  // Scroll-tour limits and pacing (radians / seconds of timeline).
+  maxPitch: 0.35,
+  rotateDuration: 1.2,
+  holdDuration: 0.55,
+  scrub: 0.8,
+} as const;
+
