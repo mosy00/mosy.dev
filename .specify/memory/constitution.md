@@ -1,50 +1,103 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!-- SYNC IMPACT REPORT
+     Version change: (unratified scaffold) -> 1.0.0
+     Modified principles: none (initial ratification; every principle below is new)
+     Added principles:
+       - I. Originality Over Convention
+       - II. Creative Concepts Are Respected
+       - III. Beauty With Clarity
+       - IV. Quality Over Quantity
+       - V. Craftsmanship & Consistency
+       - VI. Preserve Intentionality
+       - VII. Mobile Experience Matters
+       - VIII. Scrolling Is Part of the Experience
+     Added sections: Technology Constraints; Quality Gates & Review Process; Governance
+     Removed sections: none
+     Deferred items / TODOs: none
+     Note: temporary review material; remove this report before committing.
+-->
+
+# Mosy.dev Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Originality Over Convention
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+The website MUST feel personal, extraordinary, and intentionally different from typical
+portfolio websites. Generic portfolio patterns (template layouts, boilerplate hero and card
+grids, standard agency structures) MUST NOT be adopted as-is; they MUST be reinterpreted
+through the site's own artistic language or rejected. **Rationale**: this is a personal
+creative work, and sameness is its primary failure mode.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### II. Creative Concepts Are Respected
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+Every section MUST be built around a distinct creative idea. A section MUST NOT be reduced
+to a generic website pattern without a clear, explicit reason. **Rationale**: the creative
+concepts are the substance of the site; silently flattening them into standard patterns
+erases the value of the work.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### III. Beauty With Clarity
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+Visual experimentation MUST remain understandable, usable, accessible, and coherent.
+An experiment that costs the visitor orientation, readability, or accessibility MUST be
+revised until it works. **Rationale**: clarity is what makes the beauty legible; beauty
+that confuses fails both sides of this principle.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### IV. Quality Over Quantity
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+The site MUST prefer a small number of exceptional experiences over many ordinary sections
+or features. Additions that grow volume without raising quality MUST be cut, merged, or
+rejected. **Rationale**: polish does not scale with surface area, and every ordinary
+section dilutes the exceptional ones.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### V. Craftsmanship & Consistency
+
+Every addition MUST meet a high standard of visual, interactive, and technical quality
+while remaining consistent with the project's overall artistic direction. This covers
+polish of motion and interaction, disciplined design (type, color, spacing, timing), and
+clean, typed, maintainable code. **Rationale**: consistent craft across all layers is what
+makes the whole feel authored rather than assembled.
+
+### VI. Preserve Intentionality
+
+Features, patterns, or content that dilute the website's personal identity or artistic
+purpose MUST NOT be introduced. Every proposed change MUST be able to answer "what
+intention does this serve?"; changes that cannot are declined. **Rationale**: identity is
+rarely lost in one large decision; it erodes through the accumulation of neutral ones.
+
+### VII. Mobile Experience Matters
+
+The website MUST be mobile-friendly. Every feature that cannot work on mobile devices MUST
+have a thoughtful mobile alternative, and every mobile adaptation MUST preserve the quality
+and intent of the desktop experience instead of degrading into a stripped fallback.
+**Rationale**: mobile is a first-class surface for real visitors, so adaptation is part of
+the design work, not an afterthought.
+
+### VIII. Scrolling Is Part of the Experience
+
+Pages MUST respond creatively and meaningfully to user scrolling where the content supports
+it. Scroll-based interactions MUST enhance the website's atmosphere and uniqueness without
+compromising usability or accessibility. **Rationale**: scrolling is one of the few
+universal inputs on the web, which makes it the most powerful instrument the site has for
+storytelling and atmosphere.
+
+## Quality Gates & Review Process
+
+- `npm run typecheck` MUST pass before any change is merged.
+- `npm run build` MUST succeed, including the production build.
+- Every change MUST be reviewed against all eight principles before merge.
+- Work that introduces a new section or creative concept (Principle II) MUST state the idea
+  behind it and its intended mobile adaptation as part of the change.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+- This constitution supersedes all other practices for the project; when a request conflicts
+  with a principle, the principle wins unless the constitution is formally amended.
+- All PRs and reviews MUST verify compliance with the principles; added complexity or scope
+  MUST be justified against Principles IV and VI.
+- **Amendments**: propose the change in writing (what changes and why), update this
+  document, increment the version per the policy below, and refresh the Last Amended date.
+- **Versioning policy**: MAJOR for backward-incompatible governance changes (principle
+  removals or redefinitions), MINOR for new principles or materially expanded guidance,
+  PATCH for clarifications, wording, and non-semantic refinements.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-09-22 | **Last Amended**: 2026-09-22
