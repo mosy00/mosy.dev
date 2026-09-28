@@ -23,6 +23,26 @@ export const PLANET = {
   floatSpeed: 0.55,
 } as const;
 
+export const HEX = {
+  // Icosphere subdivisions for the dual hex grid:
+  // Subdivisions:
+  //   4 -> base icosphere 2562 vertices -> dual grid has 2562 tiles
+  //        Yields ~40-80 tiles per skill landmass (well above the >30 floor),
+  //        organic coastlines, and loads in <15ms.
+  detail: 4,
+  // Per-tile deterministic lightness jitter for distinguishable tile boundaries
+  shadeJitter: 0.06,
+} as const;
+
+export const POLAR = {
+  // Minimum latitude (degrees) for polar ice cap tiles
+  thresholdLat: 55,
+  // White ice-like color
+  color: 0xf2f6f8,
+  roughness: 0.35,
+  metalness: 0.1,
+} as const;
+
 export const REGIONS = {
   // Icosphere subdivisions: 5 → 20480 faces — smooth coastlines.
   detail: 5,
@@ -31,7 +51,7 @@ export const REGIONS = {
   // Deterministic seed jitter so islands aren't perfectly symmetric.
   seedJitter: 0.22,
   // Angular radius of one seed's island, scaled by expertise.
-  islandRadius: { min: 0.12, max: 0.26 },
+  islandRadius: { min: 0.2, max: 0.3 },
   // How far islands are raised above the ocean sphere.
   raise: 1.02,
   // Satellite seeds cluster this close (× island radius) to the primary
