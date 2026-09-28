@@ -2,6 +2,7 @@ import { gsap } from 'gsap';
 import { Group, MathUtils, Mesh, MeshStandardMaterial, SphereGeometry, Vector3 } from 'three';
 import type { SkillArea } from '../data/skills';
 import { HIGHLIGHT, OCEAN, PLANET, TOUR } from './config';
+import { buildPolarLands, type PolarLandsBuild } from './polarLands';
 import { buildSkillIslands, type SkillIslandsBuild } from './skillRegions';
 
 export interface TourTarget {
@@ -11,7 +12,7 @@ export interface TourTarget {
 
 /**
  * The planet: a light-blue ocean sphere with skill islands raised out of
- * it, in three nested groups —
+ * it and white figurative polar caps at both poles, in three nested groups —
  *   object3D  float + scale (scene level)
  *   tourGroup rotation owned by the scroll tour (spins islands to camera)
  *   dragGroup rotation owned by user drag (free yaw, pitch clamped ±45°)
@@ -23,6 +24,7 @@ export class Planet {
   public readonly dragGroup = new Group();
   private readonly ocean: Mesh<SphereGeometry, MeshStandardMaterial>;
   private readonly islands: SkillIslandsBuild;
+  private readonly polarLands: PolarLandsBuild;
   private tourTargetsCache: TourTarget[] | null = null;
   private highlightedSkillId: string | null = null;
   private elapsedTime = 0;
@@ -37,7 +39,8 @@ export class Planet {
       }),
     );
     this.islands = buildSkillIslands(skills);
-    this.dragGroup.add(this.ocean, ...this.islands.meshes);
+    this.polarLands = buildPolarLands(this.islands.grid);
+    this.dragGroup.add(this.ocean, ...this.islands.meshes, ...this.polarLands.meshes);
     this.dragGroup.rotation.x = PLANET.initialTilt;
     this.tourGroup.add(this.dragGroup);
     // YXZ so yaw spins the globe about its poles and pitch stays latitude-like.
@@ -45,7 +48,7 @@ export class Planet {
     this.object3D.add(this.tourGroup);
   }
 
-  /** Island meshes only — the raycaster must ignore open ocean. */
+  /** Island meshes only — the raycaster must ignore open ocean and polar lands (FR-007). */
   public get meshes(): Mesh[] {
     return this.islands.meshes;
   }
@@ -97,9 +100,11 @@ export class Planet {
     this.ocean.geometry.dispose();
     this.ocean.material.dispose();
     this.islands.dispose();
+    this.polarLands.dispose();
     this.object3D.clear();
   }
 }
+
 
 
 

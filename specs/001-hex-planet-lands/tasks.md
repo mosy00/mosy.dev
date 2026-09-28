@@ -18,7 +18,7 @@
 
 **Purpose**: Define the procedural configuration constants for hex subdivision, jitter, polar caps, and tuned skill region parameters before geometry construction.
 
-- [ ] T001 Add `HEX` and `POLAR` configuration objects and update `REGIONS` parameters in `src/three/config.ts` per `specs/001-hex-planet-lands/plan.md` and `contracts/modules.md` (subdivisions: 3 or 4 targeting ~1,300–1,600 tiles, shadeJitter: 0.06, polarThresholdLat: 55°, polarColor: 0xf2f6f8).
+- [x] T001 Add `HEX` and `POLAR` configuration objects and update `REGIONS` parameters in `src/three/config.ts` per `specs/001-hex-planet-lands/plan.md` and `contracts/modules.md` (subdivisions: 3 or 4 targeting ~1,300–1,600 tiles, shadeJitter: 0.06, polarThresholdLat: 55°, polarColor: 0xf2f6f8).
 
 ---
 
@@ -28,8 +28,8 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T002 Implement geodesic dual icosphere math and `HexSphereGrid` construction in `src/three/hexGrid.ts` per `specs/001-hex-planet-lands/contracts/modules.md` (generate normalized vertices as tile centers, dual faces as 5/6 polygon corners with CCW winding, adjacency list mapping `tileId -> neighborIds`, and `findNearestTileId(dir: Vector3)`).
-- [ ] T003 Enforce Euler's formula invariant INV-06 in `src/three/hexGrid.ts` ensuring exactly 12 pentagons with 2 pinned to the polar vertices and all remaining cells having strictly 6 corners.
+- [x] T002 Implement geodesic dual icosphere math and `HexSphereGrid` construction in `src/three/hexGrid.ts` per `specs/001-hex-planet-lands/contracts/modules.md` (generate normalized vertices as tile centers, dual faces as 5/6 polygon corners with CCW winding, adjacency list mapping `tileId -> neighborIds`, and `findNearestTileId(dir: Vector3)`).
+- [x] T003 Enforce Euler's formula invariant INV-06 in `src/three/hexGrid.ts` ensuring exactly 12 pentagons with 2 pinned to the polar vertices and all remaining cells having strictly 6 corners.
 
 **Checkpoint**: Foundation ready — hex grid lattice generation produces valid spherical honeycomb topology.
 
@@ -43,9 +43,9 @@
 
 ### Implementation for User Story 1
 
-- [ ] T004 [US1] Implement hex tile assignment and facet geometry assembly in `src/three/skillRegions.ts` replacing triangle-based face assignment (assign tiles to nearest skill seed, build merged `BufferGeometry` with flat facet positions raised to `PLANET.radius * REGIONS.raise`).
-- [ ] T005 [US1] Implement per-tile shade variation in `src/three/skillRegions.ts` per `specs/001-hex-planet-lands/data-model.md` INV-05 (compute deterministic pseudo-random lightness jitter in $[-0.06, +0.06]$ from tile center/id, applying modulated vertex colors so each tile's outline is distinguishable without gaps or line outlines).
-- [ ] T006 [US1] Preserve the `SkillIslandsBuild` module interface and raycaster contract in `src/three/skillRegions.ts` and `src/three/Planet.ts` per `specs/001-hex-planet-lands/contracts/modules.md` (populate `mesh.userData['skillId'] = skill.id`, keep `Planet.meshes` returning skill lands, maintain emissive hover highlight and tour target orientation).
+- [x] T004 [US1] Implement hex tile assignment and facet geometry assembly in `src/three/skillRegions.ts` replacing triangle-based face assignment (assign tiles to nearest skill seed, build merged `BufferGeometry` with flat facet positions raised to `PLANET.radius * REGIONS.raise`).
+- [x] T005 [US1] Implement per-tile shade variation in `src/three/skillRegions.ts` per `specs/001-hex-planet-lands/data-model.md` INV-05 (compute deterministic pseudo-random lightness jitter in $[-0.06, +0.06]$ from tile center/id, applying modulated vertex colors so each tile's outline is distinguishable without gaps or line outlines).
+- [x] T006 [US1] Preserve the `SkillIslandsBuild` module interface and raycaster contract in `src/three/skillRegions.ts` and `src/three/Planet.ts` per `specs/001-hex-planet-lands/contracts/modules.md` (populate `mesh.userData['skillId'] = skill.id`, keep `Planet.meshes` returning skill lands, maintain emissive hover highlight and tour target orientation).
 
 **Checkpoint**: User Story 1 MVP complete and functional. Skill lands visibly read as strategy-game hex tiles with readable seams.
 
@@ -60,9 +60,9 @@
 
 ### Implementation for User Story 2
 
-- [ ] T007 [US2] Implement graph flood-fill connectivity filter in `src/three/skillRegions.ts` per `specs/001-hex-planet-lands/data-model.md` INV-02 (traverse `neighborIds` from primary seed tile, keep only the single largest connected component per skill, and release disconnected satellite tiles back to open ocean).
-- [ ] T008 [US2] Implement deterministic radius growth loop in `src/three/skillRegions.ts` per `specs/001-hex-planet-lands/data-model.md` INV-01 (if a skill's post-flood-fill tile count is $< 31$, iteratively increment its assignment radius by $\delta$ and re-run assignment until `tileIds.size >= 31`).
-- [ ] T009 [US2] Retune satellite seed offsets and border noise in `src/three/skillRegions.ts` and `src/three/config.ts` to ensure organic coastlines while preserving connectivity across all 10 portfolio skills.
+- [x] T007 [US2] Implement graph flood-fill connectivity filter in `src/three/skillRegions.ts` per `specs/001-hex-planet-lands/data-model.md` INV-02 (traverse `neighborIds` from primary seed tile, keep only the single largest connected component per skill, and release disconnected satellite tiles back to open ocean).
+- [x] T008 [US2] Implement deterministic radius growth loop in `src/three/skillRegions.ts` per `specs/001-hex-planet-lands/data-model.md` INV-01 (if a skill's post-flood-fill tile count is $< 31$, iteratively increment its assignment radius by $\delta$ and re-run assignment until `tileIds.size >= 31`).
+- [x] T009 [US2] Retune satellite seed offsets and border noise in `src/three/skillRegions.ts` and `src/three/config.ts` to ensure organic coastlines while preserving connectivity across all 10 portfolio skills.
 
 **Checkpoint**: User Story 2 complete. All skill landmasses satisfy the strict $> 30$ tile floor on a single connected territory.
 
@@ -76,9 +76,9 @@
 
 ### Implementation for User Story 3
 
-- [ ] T010 [P] [US3] Create polar land generator `buildPolarLands(grid)` in `src/three/polarLands.ts` per `specs/001-hex-planet-lands/contracts/modules.md` (identify tiles with $|\text{latitude}| \ge \text{POLAR.thresholdLat}$, assemble merged north/south cap geometries with white vertex colors plus shade jitter, tag with `userData['isPolar'] = true`).
-- [ ] T011 [US3] Integrate polar lands into `src/three/Planet.ts` (call `buildPolarLands(grid)`, add polar meshes to `dragGroup` for unified rotation, dispose geometries in `Planet.dispose()`, and strictly exclude polar meshes from the `Planet.meshes` getter per Contract 1).
-- [ ] T012 [US3] Enforce the open-ocean moat invariant INV-04 between polar caps ($\ge 55^\circ$) and skill seed limits ($\le 42^\circ$) in `src/three/config.ts` and `src/three/skillRegions.ts` ensuring a minimum open water band $\ge 13^\circ$.
+- [x] T010 [P] [US3] Create polar land generator `buildPolarLands(grid)` in `src/three/polarLands.ts` per `specs/001-hex-planet-lands/contracts/modules.md` (identify tiles with $|\text{latitude}| \ge \text{POLAR.thresholdLat}$, assemble merged north/south cap geometries with white vertex colors plus shade jitter, tag with `userData['isPolar'] = true`).
+- [x] T011 [US3] Integrate polar lands into `src/three/Planet.ts` (call `buildPolarLands(grid)`, add polar meshes to `dragGroup` for unified rotation, dispose geometries in `Planet.dispose()`, and strictly exclude polar meshes from the `Planet.meshes` getter per Contract 1).
+- [x] T012 [US3] Enforce the open-ocean moat invariant INV-04 between polar caps ($\ge 55^\circ$) and skill seed limits ($\le 42^\circ$) in `src/three/config.ts` and `src/three/skillRegions.ts` ensuring a minimum open water band $\ge 13^\circ$.
 
 
 ---
@@ -87,9 +87,9 @@
 
 **Purpose**: Validation, performance auditing, cleanup, and verification of non-regression across existing interactions.
 
-- [ ] T013 [P] Verify interaction and tour parity in `src/three/Planet.ts`, `src/three/PlanetControls.ts`, and `src/three/PlanetTour.ts` per Quickstart scenario V5 (verify drag inertia, $\pm 45^\circ$ pitch clamp, and hover pick behavior).
-- [ ] T014 Run performance audit against the $\ge 30$ fps floor (60 fps target) during continuous drag, hover pick, and tour animation in `src/three/Planet.ts` per Quickstart scenario V6 and FR-010.
-- [ ] T015 Run automated verification gates (`npm run typecheck` and `npm run build`) ensuring zero TypeScript compilation errors and clean production bundle generation.
+- [x] T013 [P] Verify interaction and tour parity in `src/three/Planet.ts`, `src/three/PlanetControls.ts`, and `src/three/PlanetTour.ts` per Quickstart scenario V5 (verify drag inertia, $\pm 45^\circ$ pitch clamp, and hover pick behavior).
+- [x] T014 Run performance audit against the $\ge 30$ fps floor (60 fps target) during continuous drag, hover pick, and tour animation in `src/three/Planet.ts` per Quickstart scenario V6 and FR-010.
+- [x] T015 Run automated verification gates (`npm run typecheck` and `npm run build`) ensuring zero TypeScript compilation errors and clean production bundle generation.
 
 ---
 
