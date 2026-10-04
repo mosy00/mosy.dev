@@ -1,7 +1,7 @@
 # mosy.dev — personal portfolio
 
-Portfolio built around an interactive 3D **skills planet**: a sphere where skill areas become
-"countries" — polygon regions on the surface, tinted by expertise and hoverable.
+Portfolio built around an interactive 3D **skills planet**: a hex-tiled globe where skill areas
+become "countries" — hex regions on the surface, tinted by expertise and hoverable.
 
 ## Stack
 
@@ -29,16 +29,21 @@ src/
 ├─ data/
 │  └─ skills.ts             # skill areas + shared expertise→color formula
 ├─ three/
-│  ├─ config.ts             # tuning constants (camera fit, planet, regions, controls)
+│  ├─ config.ts             # tuning constants (camera fit, planet, regions, ocean, tour)
 │  ├─ Experience.ts         # renderer, camera, lights, resize/fit, render loop, dispose
-│  ├─ Planet.ts             # the planet group: skill regions + float
+│  ├─ Planet.ts             # the planet group: lands + ocean + caps, float, highlight
 │  ├─ PlanetControls.ts     # drag-to-rotate with inertia + idle spin
-│  ├─ PlanetInteraction.ts  # raycast hover → skill highlight callbacks
-│  └─ skillRegions.ts       # spherical-Voronoi islands: 1 mesh per skill
+│  ├─ PlanetInteraction.ts  # raycast hover + occluder-sphere rule → skill highlight
+│  ├─ hexGrid.ts            # geodesic dual hex grid (the tile lattice)
+│  ├─ tileFan.ts            # shared flush fan-builder (lands/ocean/caps at one radius)
+│  ├─ skillRegions.ts       # land assignment: seeds, erosion, flood fill, 1 mesh/skill
+│  ├─ oceanTiles.ts         # merged translucent hex ocean shell
+│  ├─ polarLands.ts         # the two white ice caps
+│  └─ motionPrefs.ts        # prefers-reduced-motion helper
 ├─ animations/
 │  ├─ gsap.ts               # single ScrollTrigger registration point
-│  ├─ planetTour.ts         # scroll tour: spins each island to the camera
-│  └─ scrollAnimations.ts   # hero intro, reveals, planet scale flourish
+│  ├─ planetTour.ts         # scroll tour: ~180° sweep + 1.111× growth (static if reduced)
+│  └─ scrollAnimations.ts   # hero intro + reveals
 └─ ui/
    ├─ smoothScroll.ts       # Lenis <-> GSAP ticker integration
    ├─ skillLegend.ts        # legend built from the same skill data (hover-synced)
@@ -49,25 +54,40 @@ src/
 ## Planet (steps 2–4)
 
 - **Its own section** — the canvas lives inside `#planet` (the second section): dead-center,
-  sized by a camera fit so the sphere spans ~86% of the viewport height (width-fit fallback
-  on portrait screens). Sizes come from the canvas element, not the window.
-- **Earth-like ocean & connected lands** — a glossy light-blue ocean sphere; each skill is
-  ONE connected landmass (primary seed + clustered satellites, so the caps always merge)
-  raised above the sea, carved from a 20k-face icosphere with noise-warped coastlines and
-  merged into **one mesh per skill** (~11 draw calls total). Expertise buys island size
-  and deepens the tint via the shared formula in `data/skills.ts`; most of the globe
-  stays open ocean on purpose.
+  sized by a camera fit so the globe enters at `0.9315 × the smaller viewport dimension` and grows to
+  `1.035 ×` as you scroll — both ~10 % smaller than the previous version. Both poles stay visible
+  at every scroll position. The fit is computed against the viewport and converted to canvas-relative
+  before fitting, because the canvas deliberately overhangs it (`--planet-bleed`) so the globe can
+  bleed over the neighbouring sections; `.planet { z-index: 2 }` keeps those sections from painting
+  over it.
+- **One flush hex shell** — lands, a slightly translucent light-blue hex ocean (~80 % opaque)
+  and white polar ice caps are all meshed at the same radius by one shared fan-builder
+  (`three/tileFan.ts`), so there is no smooth background sphere and no padding at coastlines.
+  The sea is ~20 % transparent and land/cap meshes render both sides, so continents on the
+  far hemisphere read *through* the water like a glass marble — while the sea's own far
+  hemisphere stays culled, so you never see a jumbled second ocean.
+- **Connected lands & distinct shapes** — each skill is ONE connected landmass (primary seed
+  plus clustered satellites, so its parts always merge) with its own silhouette profile
+  (elliptical aspect + 3–5 radial lobes). Expertise visibly buys territory (100 % is ≥ 2× a
+  40 % land) and deepens the tint via the shared formula in `data/skills.ts`; a symmetric
+  erosion pass keeps lands from ever touching, and land stops at 60° latitude, leaving a moat
+  to the 66.5° ice caps.
 - **Earth-like drag** — free spin left/right; vertical drag is clamped to ±45° so the
-  poles always stay up/down. Velocity-based inertia settles into the idle spin, and
-  `touch-action: pan-y` keeps vertical page scrolling usable on touch.
+  poles always stay up/down, and follows the pointer: dragging up tips the top of the globe away
+  and reveals its lower parts (the original direction). A vertical flick keeps gliding in that same
+  direction and eases out smoothly (`pitchGlideDecay`, separate from the yaw damping). Inertia then
+  settles into the idle spin, and `touch-action: pan-y` keeps vertical page scrolling usable on touch.
 - **Hover (step 3)** — a raycaster picks the island under the pointer (suppressed while
   dragging): the active island glows (GSAP-tweened emissive), the rest dim, the legend row
   lights up, and an info card shows name, blurb and an expertise meter. Legend rows are
   buttons, so keyboard focus triggers the same highlight.
 - **Scroll tour (step 4)** — the planet section is tall (420vh) with a sticky stage;
-  scrolling through it drives a scrubbed GSAP timeline that rotates an outer "tour group"
-  so each skill island takes a turn facing the camera. The tour owns its own nested group,
-  so it never fights user drag; its pitch is clamped too, keeping the poles up.
+  scrolling through it drives one scrubbed GSAP timeline that sweeps an outer "tour group"
+  ~180° about the poles and grows the globe by 1.111× (from 0.9315× to 1.035× the smaller viewport
+  dimension), at constant pitch so no land is ever
+  re-centred and the poles never move. The tour owns its own nested group, so it never fights
+  user drag. With `prefers-reduced-motion: reduce` no timeline is created: the globe stays
+  enlarged and static, while drag, hover, the legend and the cards keep working.
 
 ## HMR behaviour
 
@@ -81,6 +101,6 @@ src/
 - [x] **Step 1** — scaffold + draggable, auto-rotating planet
 - [x] **Step 2** — skill "countries": polygon regions on the sphere
 - [x] **Step 3** — raycast hover: expertise tint + info card
-- [x] **Step 4** — scroll tour: the globe spins each skill to face you
+- [x] **Step 4** — scroll tour: ~180° sweep + 1.111× growth (static under reduced motion)
 - [ ] **Step 5** — polish: atmosphere shader, terrain relief, clouds, starfield (see suggestions)
 
