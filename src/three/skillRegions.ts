@@ -1,29 +1,46 @@
 import {
   BufferGeometry,
   Color,
+  DoubleSide,
   Float32BufferAttribute,
   Mesh,
   MeshStandardMaterial,
   Vector3,
 } from 'three';
 import { skillColorHSL, type SkillArea } from '../data/skills';
-import { HEX, HIGHLIGHT, PLANET, POLAR, REGIONS } from './config';
+import { HEX, HIGHLIGHT, PLANET, REGIONS } from './config';
 import { buildHexSphereGrid, type HexSphereGrid } from './hexGrid';
+import { buildTileFan } from './tileFan';
 
 export interface SkillIslandsBuild {
   /** One merged faceted mesh per skill with vertex colors. */
   readonly meshes: Mesh[];
-  /** One representative direction per skill (primary seed) — tour targets. */
+  /** One representative direction per skill (primary seed). */
   readonly skillDirections: readonly Vector3[];
   /** Shared hex grid instance for polar caps and spatial alignment. */
   readonly grid: HexSphereGrid;
+  /** Union of every tile id owned by any skill (for ocean exclusion in US1). */
+  readonly landTileIds: ReadonlySet<number>;
   dispose(): void;
+}
+
+/** Deterministic per-skill silhouette: elliptical aspect + radial lobes (D5). */
+interface ShapeProfile {
+  readonly aspect: number;
+  readonly lobes: number;
+  readonly phase: number;
+  readonly amplitude: number;
 }
 
 interface Seed {
   readonly direction: Vector3;
   readonly skillIndex: number;
   readonly islandRadius: number;
+  /** Tangent frame used to measure the modulated distance (primary seeds). */
+  readonly tangent: Vector3;
+  readonly bitangent: Vector3;
+  /** Primary seeds carry a silhouette profile; satellites stay isotropic. */
+  readonly profile: ShapeProfile | null;
 }
 
 function pseudoRandom(seed: number): number {
@@ -40,13 +57,60 @@ function boundaryWarp(centroid: Vector3, seed: Vector3): number {
   ) / 3;
 }
 
+/** Orthonormal tangent basis for a unit direction (same style as hexGrid). */
+function tangentFrame(direction: Vector3, outTangent: Vector3, outBitangent: Vector3): void {
+  if (Math.abs(direction.y) < 0.9) {
+    outTangent.set(0, 1, 0);
+  } else {
+    outTangent.set(1, 0, 0);
+  }
+  outTangent.crossVectors(outTangent, direction).normalize();
+  outBitangent.crossVectors(direction, outTangent).normalize();
+}
+
 /**
- * Builds hexagonal skill landmasses out of the ocean.
+ * Per-skill shape profile (research D5), deterministic from skillIndex:
+ * aspect ∈ [0.8, 1.12], lobe count ∈ {3, 4, 5}, amplitude ∈ [0.1, 0.17].
+ */
+function shapeForSkill(skillIndex: number): ShapeProfile {
+  const rand = (n: number): number => pseudoRandom(skillIndex * 53 + n * 11 + 3);
+  const lobeOptions = REGIONS.shape.lobes;
+  const lobeIndex = Math.min(lobeOptions.length - 1, Math.floor(rand(1) * lobeOptions.length));
+  return {
+    aspect: REGIONS.shape.aspectMin + (REGIONS.shape.aspectMax - REGIONS.shape.aspectMin) * rand(0),
+    lobes: lobeOptions[lobeIndex] ?? 3,
+    phase: rand(2) * Math.PI * 2,
+    amplitude: REGIONS.shape.ampMin + (REGIONS.shape.ampMax - REGIONS.shape.ampMin) * rand(3),
+  };
+}
+
+/**
+ * Distance from a tile to a seed in the shape's own metric: satellites stay
+ * isotropic, while the primary seed squashes along its aspect axis and bulges
+ * along its lobes so every land reads as a distinct silhouette (research D5).
+ */
+function seedDistance(center: Vector3, seed: Seed): number {
+  const dot = Math.min(1, Math.max(-1, center.dot(seed.direction)));
+  const angle = Math.acos(dot);
+  const profile = seed.profile;
+  if (!profile) {
+    return angle;
+  }
+
+  const bearing = Math.atan2(center.dot(seed.bitangent), center.dot(seed.tangent));
+  const elliptical = Math.hypot((angle * Math.cos(bearing)) / profile.aspect, angle * Math.sin(bearing));
+  const lobe = 1 + profile.amplitude * Math.sin(profile.lobes * bearing + profile.phase);
+  return elliptical / lobe;
+}
+
+/**
+ * Builds hexagonal skill landmasses out of the hex ocean, flush at PLANET.radius.
  * Guaranteed invariants:
  * - Each skill has strictly ONE connected landmass (INV-02)
  * - Each landmass contains > 30 tiles (INV-01)
  * - Per-tile deterministic shade variation gives visible hexagonal outlines (INV-05)
- * - Landmasses are raised with flat-shaded facets and vertex colors
+ * - Land never touches another skill's land (symmetric erosion pass, D5)
+ * - Land stays inside ±maxLandLat, leaving a structural moat to the polar caps
  */
 export function buildSkillIslands(skills: readonly SkillArea[]): SkillIslandsBuild {
   const grid = buildHexSphereGrid(HEX.detail);
@@ -58,9 +122,15 @@ export function buildSkillIslands(skills: readonly SkillArea[]): SkillIslandsBui
   const maxLatitude = (REGIONS.maxLatitude * Math.PI) / 180;
 
   skills.forEach((skill, skillIndex) => {
-    const quota = 1 + Math.round(skill.expertise * 2);
+    // Clamp before sizing and quota so the 40% floor always holds (research D10).
+    const expertise = Math.min(
+      Math.max(skill.expertise, REGIONS.expertiseRange.min),
+      REGIONS.expertiseRange.max,
+    );
+    const quota = 1 + Math.round(expertise * 2);
     const islandRadius =
-      REGIONS.islandRadius.min + (REGIONS.islandRadius.max - REGIONS.islandRadius.min) * skill.expertise;
+      REGIONS.islandRadius.min + (REGIONS.islandRadius.max - REGIONS.islandRadius.min) * expertise;
+    const profile = shapeForSkill(skillIndex);
 
     const bandY = 1 - ((skillIndex + 0.5) / skills.length) * 2;
     const y = Math.sin(maxLatitude) * bandY;
@@ -71,7 +141,19 @@ export function buildSkillIslands(skills: readonly SkillArea[]): SkillIslandsBui
       y + (pseudoRandom(skillIndex * 7 + 1) - 0.5) * REGIONS.seedJitter * 0.5,
       Math.sin(theta) * ring + (pseudoRandom(skillIndex * 7 + 2) - 0.5) * REGIONS.seedJitter,
     ).normalize();
-    seeds.push({ direction: primary, skillIndex, islandRadius });
+    const tangentAxis = new Vector3();
+    const bitangentAxis = new Vector3();
+    tangentFrame(primary, tangentAxis, bitangentAxis);
+    // The primary seed owns the skill's silhouette; satellites stay isotropic
+    // so they read as bays and peninsulas hanging off it.
+    seeds.push({
+      direction: primary,
+      skillIndex,
+      islandRadius,
+      tangent: tangentAxis,
+      bitangent: bitangentAxis,
+      profile,
+    });
     skillDirections.push(primary.clone());
 
     for (let q = 1; q < quota; q += 1) {
@@ -88,7 +170,14 @@ export function buildSkillIslands(skills: readonly SkillArea[]): SkillIslandsBui
       tangent.normalize();
       const offset = islandRadius * REGIONS.satelliteOffset * (0.55 + 0.45 * rand(3));
       const direction = primary.clone().add(tangent.multiplyScalar(offset)).normalize();
-      seeds.push({ direction, skillIndex, islandRadius });
+      seeds.push({
+        direction,
+        skillIndex,
+        islandRadius,
+        tangent: tangentAxis,
+        bitangent: bitangentAxis,
+        profile: null,
+      });
     }
   });
 
@@ -110,7 +199,8 @@ function generateMeshes(
     const rawBuckets: number[][] = Array.from({ length: skills.length }, () => []);
 
     for (const tile of tiles) {
-      if (Math.abs(tile.latitude) >= POLAR.thresholdLat) {
+      // Hard latitude cap: land never enters the 66.5° polar-cap moat (D3).
+      if (Math.abs(tile.latitude) >= REGIONS.maxLandLat) {
         continue;
       }
 
@@ -119,7 +209,7 @@ function generateMeshes(
 
       for (const seed of seeds) {
         const score =
-          tile.center.angleTo(seed.direction) +
+          seedDistance(tile.center, seed) +
           REGIONS.borderNoise * boundaryWarp(tile.center, seed.direction);
         if (score < bestScore) {
           bestScore = score;
@@ -132,9 +222,36 @@ function generateMeshes(
       }
     }
 
+    // 2b. Symmetric erosion (research D5): drop every tile grid-adjacent to a
+    // DIFFERENT skill's tile, both sides, so bigger lands can never touch or
+    // merge. One pass suffices — removals only shrink the adjacency graph.
+    const tileSkill = new Map<number, number>();
+    rawBuckets.forEach((tileIds, sIdx) => {
+      for (const tileId of tileIds) {
+        tileSkill.set(tileId, sIdx);
+      }
+    });
+    const erodedBuckets: number[][] = rawBuckets.map((tileIds, sIdx) => {
+      const kept: number[] = [];
+      for (const tileId of tileIds) {
+        const tile = tiles[tileId];
+        if (!tile) {
+          continue;
+        }
+        const touchesOtherSkill = tile.neighborIds.some((neighborId) => {
+          const owner = tileSkill.get(neighborId);
+          return owner !== undefined && owner !== sIdx;
+        });
+        if (!touchesOtherSkill) {
+          kept.push(tileId);
+        }
+      }
+      return kept;
+    });
+
     // 3. Flood-fill filter to keep strictly ONE connected component per skill
     finalBuckets = skills.map((_, sIdx) => {
-      const assigned = new Set(rawBuckets[sIdx] ?? []);
+      const assigned = new Set(erodedBuckets[sIdx] ?? []);
       const primaryDir = skillDirections[sIdx];
       let primaryTileId = -1;
       if (primaryDir) {
@@ -192,100 +309,38 @@ function buildMeshArray(
   skillDirections: readonly Vector3[],
 ): SkillIslandsBuild {
   const tiles = grid.tiles;
-  const landRadius = PLANET.radius * REGIONS.raise;
   const meshes: Mesh[] = [];
+  const landTileIds = new Set<number>();
 
   skills.forEach((skill, skillIndex) => {
     const tileIds = finalBuckets[skillIndex] ?? [];
     if (tileIds.length === 0) {
       return;
     }
-
-    let totalTriangles = 0;
-    for (const tId of tileIds) {
-      const tile = tiles[tId];
-      if (tile) {
-        totalTriangles += tile.corners.length;
-      }
+    for (const trackedId of tileIds) {
+      landTileIds.add(trackedId);
     }
 
-    const positions = new Float32Array(totalTriangles * 9);
-    const normals = new Float32Array(totalTriangles * 9);
-    const colors = new Float32Array(totalTriangles * 9);
-
     const [hue, saturation, baseLightness] = skillColorHSL(skill);
-    const tempColor = new Color();
-    let triOffset = 0;
-
-    for (const tId of tileIds) {
-      const tile = tiles[tId];
-      if (!tile) {
-        continue;
-      }
-
+    const tileColor = new Color();
+    const fan = buildTileFan(tiles, tileIds, PLANET.radius, (tile) => {
       // Deterministic per-tile shade variation (INV-05)
       const jitter = (pseudoRandom(tile.id * 13 + 47) - 0.5) * 2 * HEX.shadeJitter;
       const tileLightness = Math.max(0.15, Math.min(0.9, baseLightness + jitter));
-      tempColor.setHSL(hue, saturation, tileLightness);
-
-      const centerPos = tile.center.clone().multiplyScalar(landRadius);
-      const cornerCount = tile.corners.length;
-
-      for (let cIdx = 0; cIdx < cornerCount; cIdx += 1) {
-        const c0 = tile.corners[cIdx]!.clone().multiplyScalar(landRadius);
-        const c1 = tile.corners[(cIdx + 1) % cornerCount]!.clone().multiplyScalar(landRadius);
-
-        // Compute flat facet outward normal
-        const edge0 = new Vector3().subVectors(c0, centerPos);
-        const edge1 = new Vector3().subVectors(c1, centerPos);
-        const facetNormal = new Vector3().crossVectors(edge0, edge1).normalize();
-
-        const pIdx = triOffset * 9;
-
-        // Vertex 0: center
-        positions[pIdx] = centerPos.x;
-        positions[pIdx + 1] = centerPos.y;
-        positions[pIdx + 2] = centerPos.z;
-        normals[pIdx] = facetNormal.x;
-        normals[pIdx + 1] = facetNormal.y;
-        normals[pIdx + 2] = facetNormal.z;
-        colors[pIdx] = tempColor.r;
-        colors[pIdx + 1] = tempColor.g;
-        colors[pIdx + 2] = tempColor.b;
-
-        // Vertex 1: c0
-        positions[pIdx + 3] = c0.x;
-        positions[pIdx + 4] = c0.y;
-        positions[pIdx + 5] = c0.z;
-        normals[pIdx + 3] = facetNormal.x;
-        normals[pIdx + 4] = facetNormal.y;
-        normals[pIdx + 5] = facetNormal.z;
-        colors[pIdx + 3] = tempColor.r;
-        colors[pIdx + 4] = tempColor.g;
-        colors[pIdx + 5] = tempColor.b;
-
-        // Vertex 2: c1
-        positions[pIdx + 6] = c1.x;
-        positions[pIdx + 7] = c1.y;
-        positions[pIdx + 8] = c1.z;
-        normals[pIdx + 6] = facetNormal.x;
-        normals[pIdx + 7] = facetNormal.y;
-        normals[pIdx + 8] = facetNormal.z;
-        colors[pIdx + 6] = tempColor.r;
-        colors[pIdx + 7] = tempColor.g;
-        colors[pIdx + 8] = tempColor.b;
-
-        triOffset += 1;
-      }
-    }
+      return tileColor.setHSL(hue, saturation, tileLightness).clone();
+    });
 
     const geometry = new BufferGeometry();
-    geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
-    geometry.setAttribute('normal', new Float32BufferAttribute(normals, 3));
-    geometry.setAttribute('color', new Float32BufferAttribute(colors, 3));
+    geometry.setAttribute('position', new Float32BufferAttribute(fan.positions, 3));
+    geometry.setAttribute('normal', new Float32BufferAttribute(fan.normals, 3));
+    geometry.setAttribute('color', new Float32BufferAttribute(fan.colors, 3));
 
     const material = new MeshStandardMaterial({
       vertexColors: true,
+      // Both sides render, so lands on the far hemisphere are visible THROUGH
+      // the translucent near-side ocean (the glass-globe read). The ocean keeps
+      // FrontSide, so we never see the sea's own interior/far tiles.
+      side: DoubleSide,
       emissive: new Color().setHSL(hue, 0.9, 0.55),
       emissiveIntensity: HIGHLIGHT.base,
       roughness: 0.55,
@@ -302,6 +357,7 @@ function buildMeshArray(
     meshes,
     skillDirections,
     grid,
+    landTileIds,
     dispose() {
       for (const mesh of meshes) {
         mesh.geometry.dispose();

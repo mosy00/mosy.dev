@@ -6,13 +6,13 @@
 
 ## Summary
 
-Replace the planet's smooth background sphere with one continuous, flush hex-tile shell: every surface tile (skill land, light-blue ocean, white polar caps) is built from the same geodesic dual-grid geometry at one shared radius, eliminating the raised-land padding entirely. Ocean tiles render as a single merged semi-transparent mesh (~75% opacity, front-face-only, no interior exposure) and the `SphereGeometry` ocean is deleted. The scroll tour abandons per-land re-centering for one scrubbed, constant-pitch yaw sweep of ~180° plus a scale-growth flourish, with the planet already cropped by the camera fit at section entry (poles never move). Land sizing switches to an expertise-driven radius mapping guaranteeing ≥2× tile-count contrast between 100% and 40% while keeping the >30-connected-tile floor; per-skill shape modulation (aspect + lobes + warp phase) gives each land a distinct silhouette; polar caps shrink to poleward of ~66.5°; `prefers-reduced-motion` gets a static enlarged presentation. All work uses the existing stack — three.js 0.186, GSAP/ScrollTrigger, Lenis, vanilla TS — with no new dependencies, no new sections, and no downloaded assets.
+Replace the planet's smooth background sphere with one continuous, flush hex-tile shell: every surface tile (skill land, light-blue ocean, white polar caps) is built from the same geodesic dual-grid geometry at one shared radius, eliminating the raised-land padding entirely. Ocean tiles render as a single merged semi-transparent mesh (~80% opacity, front-face-only so the sea's own far hemisphere never renders) with land and cap meshes both-sided, so far-hemisphere lands read faintly through the water like a glass marble — and the `SphereGeometry` ocean is deleted. The scroll tour abandons per-land re-centering for one scrubbed, constant-pitch yaw sweep of ~180° plus a scale-growth flourish, with the planet already cropped by the camera fit at section entry (poles never move). Land sizing switches to an expertise-driven radius mapping guaranteeing ≥2× tile-count contrast between 100% and 40% while keeping the >30-connected-tile floor; per-skill shape modulation (aspect + lobes + warp phase) gives each land a distinct silhouette; polar caps shrink to poleward of ~66.5°; `prefers-reduced-motion` gets a static enlarged presentation. All work uses the existing stack — three.js 0.186, GSAP/ScrollTrigger, Lenis, vanilla TS — with no new dependencies, no new sections, and no downloaded assets.
 
 ## Technical Context
 
 **Language/Version**: TypeScript ~7 strict (ES2022 target), Vite 6.1.1 — unchanged
 
-**Primary Dependencies**: three.js 0.186 (WebGL2 renderer, built-in `MeshStandardMaterial` transparency — sufficient for ~25% ocean transparency; no custom shaders or post-processing needed), GSAP 3.13 + ScrollTrigger (scrubbed tour timeline), Lenis 1.1 (smooth scroll host) — unchanged per user constraint: no new library without demonstrated necessity; none identified
+**Primary Dependencies**: three.js 0.186 (WebGL2 renderer, built-in `MeshStandardMaterial` transparency — sufficient for ~20% ocean transparency; no custom shaders or post-processing needed), GSAP 3.13 + ScrollTrigger (scrubbed tour timeline), Lenis 1.1 (smooth scroll host) — unchanged per user constraint: no new library without demonstrated necessity; none identified
 
 **Storage**: N/A — world stays fully procedural from in-repo `src/data/skills.ts` (no assets, no DB)
 
@@ -74,7 +74,7 @@ src/
 │   ├── config.ts            # EDIT: remove REGIONS.raise; POLAR threshold 55→66.5; CAMERA.fit fractions >1; TOUR sweep (~180°); ocean shell params
 │   ├── hexGrid.ts           # UNCHANGED (grid geometry source for all surfaces)
 │   ├── skillRegions.ts      # EDIT: flush radius; expertise→radius mapping (2× contrast); shape modulation (aspect/lobes/warp phase); expose land tile ids
-│   ├── oceanTiles.ts        # NEW: merged light-blue ocean mesh from free tiles (shared fan-builder, ~75% opacity, FrontSide)
+│   ├── oceanTiles.ts        # NEW: merged light-blue ocean mesh from free tiles (shared fan-builder, ~80% opacity, FrontSide)
 │   ├── polarLands.ts        # EDIT: threshold 66.5°, flush radius, white opaque
 │   ├── Planet.ts            # EDIT: remove SphereGeometry ocean; add ocean shell; raycast-target contract
 │   ├── PlanetControls.ts    # EDIT: ambient-motion gate for reduced motion (idle spin off); drag clamp untouched

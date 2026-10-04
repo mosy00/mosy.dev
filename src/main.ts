@@ -3,6 +3,7 @@ import { initPlanetTour } from './animations/planetTour';
 import { initSectionAnimations } from './animations/scrollAnimations';
 import { SKILL_AREAS } from './data/skills';
 import { Experience } from './three/Experience';
+import { prefersReducedMotion } from './three/motionPrefs';
 import { PlanetInteraction } from './three/PlanetInteraction';
 import { InfoCard } from './ui/infoCard';
 import { initAnchorNavigation } from './ui/nav';
@@ -74,7 +75,8 @@ function boot(): void {
   }
 
   // Legend must exist before animations run so its items get revealed.
-  initSectionAnimations(activeExperience.planet.object3D);
+  activeExperience.setReducedMotion(prefersReducedMotion());
+  initSectionAnimations();
   disposeTour = initPlanetTour(activeExperience.planet);
 }
 

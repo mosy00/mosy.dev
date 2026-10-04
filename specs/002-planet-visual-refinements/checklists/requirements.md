@@ -33,5 +33,6 @@
 
 - Marked `[x]` only after each item was reviewed against the spec text during /speckit-specify validation.
 - Clarification session 2026-09-29: 5 questions asked and integrated (ocean treatment → hex-tiled with sphere removed; tour sweep → ~180°; entry size → enlarged from section entry; reduced motion → respected; ocean transparency → ~25%). The previously-open FR-002 marker is resolved; 0 markers remain.
+- Superseded by clarification session 2026-10-04 (FR-005): transparency is retuned to ~20 % (80 % opacity) and its *purpose* is corrected — the page behind the canvas is near-black, so the intended, observable effect is far-hemisphere lands reading faintly through the water (land/cap materials `DoubleSide`; the sea stays front-face-culled). FR-005, SC-006, the US6 scenarios and the affected edge cases were rewritten accordingly; checkbox markers are unchanged.
 - `/speckit-implement` reads checklist checkbox state as a gate and must not modify markers.
 - `/speckit-clarify` maintains `checklists/requirements.md` alongside `spec.md`.

@@ -25,22 +25,23 @@ Run each against `npm run dev` in a browser; desktop AND a mobile viewport (devi
 ### V1 — Flush surface (US1, FR-001, SC-001)
 1. Scroll to the planet section; drag until a coastline sits near the silhouette edge.
 2. Inspect the coast from the grazing angle while slowly dragging both directions.
-- **PASS**: no gap, ledge, or floating underside anywhere; land, ocean, and ice read as one surface; no flicker/z-fight seams while rotating. At ~25 % transparency you see the *page background* through the ocean, never a second smooth layer (sphere removed).
+- **PASS**: no gap, ledge, or floating underside anywhere; land, ocean, and ice read as one surface; no flicker/z-fight seams while rotating. At ~20 % transparency you see far-hemisphere lands through the ocean — never a second smooth layer or a jumbled sea interior (sphere removed).
 
 ### V2 — Hex ocean look & behavior (FR-002/003, SC-001/006)
 1. Observe the free area: light-blue hexagonal tiles with visible facet shading (same language as lands).
 2. Hover over open ocean → nothing: no card, no highlight, no legend selection.
 3. Hover over white caps → nothing.
 4. Sweep the pointer across the middle of the globe (ocean with land *behind* it) → still nothing (occlusion rule, D6).
-5. Background discernible through the ~25 % transparency; lands/caps fully opaque in the same view.
-- **PASS**: all five; ocean clearly lighter-blue than every skill land (pre-lightened `#74c0ec`, D2); no sharp see-through of interior/far-side geometry.
+5. Look at water with a land directly behind it → the far land is faintly discernible through the ~20 % transparency; near lands/caps fully opaque in the same view.
+- **PASS**: all five; ocean clearly lighter-blue than every skill land (pre-lightened `#74c0ec`, D2); the sea's own far hemisphere and interior never render as a second jumbled ocean, and hovering a far-side land seen through the water selects nothing.
 
 ### V3 — Calmer, bigger scroll tour (US2, FR-004, SC-002)
-1. From the top of the section: the globe is already larger than the viewport (cropped — full planet not visible at first glance).
-2. Scroll to the bottom watching the poles: globe turns ~half a turn total (≈180°) and grows further (~+30 % apparent diameter), never swinging lands to centre.
+1. From the top of the section: the globe's apparent diameter is `0.9315 × min(w,h)` and **both poles are visible**; the whole globe may be in view at entry (the original entry crop no longer applies — see spec SC-002 deviation).
+2. Scroll to the bottom watching the poles: globe turns ~half a turn total (≈180°) and grows from `0.9315 × min(w,h)` to `1.035 × min(w,h)` (+11 %), never swinging lands to centre. Top and bottom stay visible throughout.
 3. Track a pole marker: it stays in its up/down region the whole way (drift ≈ 0°).
 4. Scroll back up: motion reverses smoothly (scrub 0.8 feel ≈ current site).
-- **PASS**: entry cropped; sweep ≈180°; +30 % growth; poles never repositioned; end-state cropping beyond the viewport is expected.
+5. Scroll so the planet section's top and bottom edges cross the viewport while the globe is oversized → the globe stays visible over the previous/next sections; it is never covered or cut at the section boundary.
+- **PASS**: entry `0.9315 × min(w,h)`, ~a tenth smaller than the previous retune; sweep ≈180°; end `1.035 × min(w,h)`; poles never repositioned; **both poles visible at every scroll position**; neighbours never hide the planet.
 
 ### V4 — Smaller Earth-like caps (US5, FR-008, SC-005)
 1. Rotate so the north pole faces you; then the south.
@@ -63,7 +64,7 @@ Run each against `npm run dev` in a browser; desktop AND a mobile viewport (devi
 - **PASS**: blind pairing test — no two lands read as the same silhouette recoloured; aspect/lobe variety visible (research: min profile distance 0.221); exactly one connected mass per skill; no land touches another (erosion pass); none enters the cap moat.
 
 ### V8 — Preserved interactions (FR-009, SC-007)
-1. Drag: 1:1 follow, inertia after release, vertical drag stops at ±45°.
+1. Drag: 1:1 follow, inertia after release, vertical drag stops at ±45°. Dragging UP tips the top of the globe away and reveals its lower parts (the original direction, unchanged). **A vertical flick must continue in the same direction as the drag that started it** — never reverse on release — and must ease out to a smooth stop rather than stalling within ~0.5 s. Dragging into the ±45° limit must not spring back.
 2. Hover a land: card + glow, other lands dim; leave: restore.
 3. Legend: mouse hover sync both directions; keyboard focus/activate syncs card + planet highlight.
 4. Scroll tour during all of the above: drag and tour never fight (inner/outer groups).
@@ -74,7 +75,7 @@ Run each against `npm run dev` in a browser; desktop AND a mobile viewport (devi
 - **PASS**: ≥30 fps sustained (60 target); `npm run build` output ≈ unchanged or smaller (sphere removed; D9 budget 13 draw calls / ~15.4k tris).
 
 ### V10 — Mobile / cropped reachability (FR-011, SC-007)
-1. Device viewport (e.g. 390×844 and a tablet): section shows the planet cropped at entry (~1.15× the smaller dimension), grows/crops further on scroll (or static — V11).
+1. Device viewport (e.g. 390×844 and a tablet): globe at ~0.9315× the smaller dimension at entry, growing to ~1.035× on scroll, poles always visible (or static — V11).
 2. Touch-drag rotates with inertia; tap a land shows the card; legend reachable; every skill reachable via drag + legend despite cropping.
 - **PASS**: no skill unreachable; quality matches desktop (Constitution VII).
 

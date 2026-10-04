@@ -55,6 +55,16 @@ export class Experience {
     this.renderer.setAnimationLoop(this.tick);
   }
 
+  /**
+   * Reduced motion (research D8): the controls drop their idle spin and the
+   * planet stops its float bob. Drag, inertia, hover and the tour's static
+   * fallback are handled elsewhere and stay untouched.
+   */
+  setReducedMotion(reduced: boolean): void {
+    this.controls.setAmbientMotion(!reduced);
+    this.planet.setReducedMotion(reduced);
+  }
+
   dispose(): void {
     this.renderer.setAnimationLoop(null);
     window.removeEventListener('resize', this.handleResize);
@@ -80,21 +90,34 @@ export class Experience {
   };
 
   /**
-   * Fits the planet to the canvas: the sphere spans `fit.heightFraction` of
-   * the viewport height (portrait screens fall back to a width fit) and the
-   * camera always looks straight at the centered planet.
+   * Fits the planet to the VIEWPORT, not to the canvas. The canvas is
+   * deliberately taller than the viewport (`--planet-bleed`) so the globe can
+   * bleed into the neighbouring sections, and `CAMERA.fit` is expressed against
+   * the viewport's smaller dimension — so both fractions are converted from
+   * viewport-relative to canvas-relative here. Without that conversion the
+   * taller canvas silently inflates the globe by the bleed factor and clips its
+   * poles against the canvas edge (the visible symptom is a planet whose top and
+   * bottom never appear, no matter how tall the canvas is).
+   *
+   * `camera.aspect` keeps using the canvas aspect, since that is what must not
+   * be stretched; the camera always looks straight at the centred planet.
    */
   private readonly handleResize = (): void => {
-    const width = Math.max(this.canvas.clientWidth, 1);
-    const height = Math.max(this.canvas.clientHeight, 1);
-    this.renderer.setSize(width, height, false);
+    const canvasWidth = Math.max(this.canvas.clientWidth, 1);
+    const canvasHeight = Math.max(this.canvas.clientHeight, 1);
+    this.renderer.setSize(canvasWidth, canvasHeight, false);
 
-    const aspect = width / height;
-    this.camera.aspect = aspect;
-    const halfFov = MathUtils.degToRad(CAMERA.fov / 2);
-    const fitHeight = PLANET.radius / (CAMERA.fit.heightFraction * Math.tan(halfFov));
-    const fitWidth = PLANET.radius / (CAMERA.fit.widthFraction * Math.tan(halfFov) * aspect);
-    this.camera.position.set(0, 0, Math.max(fitHeight, fitWidth));
+    this.camera.aspect = canvasWidth / canvasHeight;
     this.camera.updateProjectionMatrix();
+
+    const viewportWidth = Math.max(window.innerWidth, 1);
+    const viewportHeight = Math.max(window.innerHeight, 1);
+    const heightFraction = (CAMERA.fit.heightFraction * viewportHeight) / canvasHeight;
+    const widthFraction = (CAMERA.fit.widthFraction * viewportWidth) / canvasWidth;
+
+    const halfFov = MathUtils.degToRad(CAMERA.fov / 2);
+    const fitHeight = PLANET.radius / (heightFraction * Math.tan(halfFov));
+    const fitWidth = PLANET.radius / (widthFraction * Math.tan(halfFov) * this.camera.aspect);
+    this.camera.position.set(0, 0, Math.max(fitHeight, fitWidth));
   };
 }
