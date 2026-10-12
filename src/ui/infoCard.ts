@@ -1,12 +1,17 @@
-import { skillCssColor, skillLevelLabel, type SkillArea } from '../data/skills';
+import { skillColor, type Continent } from '../data/continents';
+import { skillLevelLabel, type SkillArea } from '../data/skills';
 
 /**
  * Floating glass card describing the hovered skill: name, blurb and an
- * expertise meter tinted with the skill's color (same formula as the 3D
- * material, so card and island always match).
+ * expertise meter tinted with the skill's colour (same function the 3D material
+ * uses, so card and land always match).
+ *
+ * The kicker line shows the CONTINENT name, so a visitor always knows which
+ * grouping they are looking at (FR-018).
  */
 export class InfoCard {
   private readonly root: HTMLElement;
+  private readonly kicker: HTMLElement;
   private readonly nameElement: HTMLElement;
   private readonly blurbElement: HTMLElement;
   private readonly levelElement: HTMLElement;
@@ -18,9 +23,8 @@ export class InfoCard {
     this.root.setAttribute('role', 'status');
     this.root.setAttribute('aria-live', 'polite');
 
-    const kicker = document.createElement('p');
-    kicker.className = 'skill-card__kicker';
-    kicker.textContent = 'Skill area';
+    this.kicker = document.createElement('p');
+    this.kicker.className = 'skill-card__kicker';
 
     this.nameElement = document.createElement('h3');
     this.nameElement.className = 'skill-card__name';
@@ -36,13 +40,16 @@ export class InfoCard {
     this.levelElement = document.createElement('p');
     this.levelElement.className = 'skill-card__level';
 
-    this.root.append(kicker, this.nameElement, this.blurbElement, meter, this.levelElement);
+    this.root.append(this.kicker, this.nameElement, this.blurbElement, meter, this.levelElement);
     parent.append(this.root);
   }
 
-  showSkill(skill: SkillArea): void {
-    const color = skillCssColor(skill);
+  showSkill(skill: SkillArea, continent: Continent | null): void {
+    const color = continent ? skillColor(skill, continent) : '#F1FFFA';
     this.root.style.setProperty('--skill-color', color);
+    // Continent name in the kicker; omit the line entirely when unknown.
+    this.kicker.textContent = continent ? continent.name : '';
+    this.kicker.hidden = continent === null;
     this.nameElement.textContent = skill.name;
     this.blurbElement.textContent = skill.blurb;
     this.levelElement.textContent = `expertise — ${skillLevelLabel(skill)}`;

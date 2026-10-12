@@ -1,11 +1,16 @@
-import { SKILL_AREAS, skillCssColor, skillLevelLabel, type SkillArea } from '../data/skills';
+import { CONTINENTS, skillColor } from '../data/continents';
+import { paletteEntry } from '../data/palette';
+import { SKILL_AREAS, skillLevelLabel, type SkillArea } from '../data/skills';
 
 export interface SkillLegendController {
   /** Highlights the row matching the hovered skill (null clears). */
   setActive(skillId: string | null): void;
 }
 
-function createLegendItem(skill: SkillArea, onHover: (skillId: string | null) => void): HTMLLIElement {
+function createLegendItem(
+  skill: SkillArea,
+  onHover: (skillId: string | null) => void,
+): HTMLLIElement {
   const item = document.createElement('li');
   item.dataset.reveal = '';
 
@@ -14,12 +19,16 @@ function createLegendItem(skill: SkillArea, onHover: (skillId: string | null) =>
   button.className = 'skill-legend__item';
   button.title = skill.blurb;
   button.dataset.skillId = skill.id;
-  // Same formula as the 3D material, so swatch = island color.
-  button.style.setProperty('--skill-color', skillCssColor(skill));
+
+  const continent = CONTINENTS.find((entry) => entry.skills.includes(skill.id)) ?? null;
+  // Same function the 3D material uses, so the swatch can never drift from the
+  // land it represents.
+  const color = continent ? skillColor(skill, continent) : paletteEntry('mintCream').hex;
+  button.style.setProperty('--skill-color', color);
 
   const dot = document.createElement('span');
   dot.className = 'skill-legend__dot';
-  dot.style.background = skillCssColor(skill);
+  dot.style.background = color;
 
   const name = document.createElement('span');
   name.className = 'skill-legend__name';
@@ -41,15 +50,47 @@ function createLegendItem(skill: SkillArea, onHover: (skillId: string | null) =>
   return item;
 }
 
-/** Builds the skill legend from the shared data module. */
+/**
+ * Builds the legend grouped by continent (FR-019), so a visitor can see the
+ * grouping without rotating the globe. A continent with no skills is skipped
+ * rather than rendering an empty header (T028).
+ */
 export function renderSkillLegend(
   container: HTMLElement,
   onHover: (skillId: string | null) => void,
 ): SkillLegendController {
   const fragment = document.createDocumentFragment();
-  for (const skill of SKILL_AREAS) {
-    fragment.append(createLegendItem(skill, onHover));
+
+  for (const continent of CONTINENTS) {
+    const members = continent.skills
+      .map((id) => SKILL_AREAS.find((skill) => skill.id === id))
+      .filter((skill): skill is SkillArea => skill !== undefined);
+    if (members.length === 0) {
+      continue;
+    }
+
+    const group = document.createElement('li');
+    group.className = 'skill-legend__group';
+    group.dataset.reveal = '';
+
+    const heading = document.createElement('p');
+    heading.className = 'skill-legend__heading';
+    heading.style.setProperty('--continent-color', paletteEntry(continent.mainColor).hex);
+
+    const chip = document.createElement('span');
+    chip.className = 'skill-legend__chip';
+    heading.append(chip, document.createTextNode(continent.name));
+    group.append(heading);
+
+    const list = document.createElement('ul');
+    list.className = 'skill-legend__list';
+    for (const skill of members) {
+      list.append(createLegendItem(skill, onHover));
+    }
+    group.append(list);
+    fragment.append(group);
   }
+
   container.append(fragment);
 
   return {

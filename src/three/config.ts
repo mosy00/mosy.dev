@@ -51,35 +51,23 @@ export const POLAR = {
 } as const;
 
 export const REGIONS = {
-  // Border wobble (radians added to seed distances) — organic coastlines.
+  // Border wobble (radians added to continent growth distances) — organic coasts.
   borderNoise: 0.06,
-  // Deterministic seed jitter so islands aren't perfectly symmetric.
-  seedJitter: 0.22,
-  // Angular radius of one seed's island, linear in the clamped expertise
-  // (research D4): r(0.4) = 0.280, r(1.0) = 0.420 — measured ≥2× tile-count
-  // contrast between 100% and 40% in the multi-skill context.
-  islandRadius: { min: 0.187, max: 0.42 },
-  // Expertise is clamped here before sizing so the 40% floor always holds
-  // (out-of-range data such as a11y 0.1 builds at the floor, D10).
-  expertiseRange: { min: 0.4, max: 1 },
-  // Satellite seeds cluster this close (× island radius) to the primary
-  // seed, so a skill's caps always merge into ONE connected landmass.
-  satelliteOffset: 0.7,
-  // Seeds stay within this latitude band (degrees from the equator) so the
-  // scroll tour can face every island without tilting the poles.
-  maxLatitude: 38,
   // Hard per-tile latitude cap: land never crosses this, so the moat to the
-  // 66.5° polar caps is always ≥ 6.5° regardless of shape/size tuning (D3).
+  // 66.5° polar caps is always >= 6.5° regardless of size tuning (D3).
   maxLandLat: 60,
-  // Per-skill silhouette profile (research D5): elliptical aspect, lobe
-  // count, and lobe amplitude give every land a distinct outline.
-  shape: {
-    aspectMin: 0.8,
-    aspectMax: 1.12,
-    lobes: [3, 4, 5],
-    ampMin: 0.1,
-    ampMax: 0.17,
-  },
+} as const;
+
+export const LAND_COLOR = {
+  // Lightness spread across a continent's skills (research D6). MEASURED
+  // OPTIMUM, not a taste call:
+  //   0.10 -> Front-end's closest pair collapses to dE 7.1 (indistinguishable)
+  //   0.18 / 0.22 -> better within-continent, but Back-end's light step slides
+  //                  toward the ocean (dE 21.0 / 16.1)
+  //   0.14 -> clears both. Do not change without re-measuring.
+  spread: 0.14,
+  minLightness: 0.12,
+  maxLightness: 0.92,
 } as const;
 
 export const OCEAN = {
