@@ -41,7 +41,7 @@ export interface PaletteEntry {
 
 /** The eight supplied colours, in the owner's stated order. */
 export const PALETTE: readonly PaletteEntry[] = [
-  { id: 'navy', hex: '#0C1E37', role: ['background'], label: 'Dark navy — background' },
+  { id: 'navy', hex: '#060f1c', role: ['background'], label: 'Dark navy — background' },
   { id: 'amber', hex: '#FFCD28', role: ['button', 'accentAlt'], label: 'Bright amber — buttons' },
   { id: 'mainBlue', hex: '#0978BE', role: ['accent'], label: 'Main blue — graphic accent' },
   { id: 'lightBlue', hex: '#80C5DC', role: ['textSecondary'], label: 'Light blue — secondary text' },
