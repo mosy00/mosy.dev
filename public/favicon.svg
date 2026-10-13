@@ -1,10 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Colours mirror src/data/palette.ts (the single source of colour truth,
+       FR-003): body = mainBlue #0978BE over navy #0C1E37, ring = lightBlue
+       #80C5DC. A standalone favicon is rendered by the browser outside the
+       page, so it cannot read the injected custom properties and the palette
+       values are copied here instead. -->
   <defs>
     <radialGradient id="g" cx="35%" cy="30%" r="80%">
-      <stop offset="0%" stop-color="#7f6bff" />
-      <stop offset="100%" stop-color="#12162b" />
+      <stop offset="0%" stop-color="#0978BE" />
+      <stop offset="100%" stop-color="#0C1E37" />
     </radialGradient>
   </defs>
   <circle cx="32" cy="32" r="22" fill="url(#g)" />
-  <ellipse cx="32" cy="34" rx="34" ry="9" fill="none" stroke="#5ad1ff" stroke-width="2" opacity="0.55" transform="rotate(-18 32 34)" />
+  <ellipse cx="32" cy="34" rx="34" ry="9" fill="none" stroke="#80C5DC" stroke-width="2" opacity="0.55" transform="rotate(-18 32 34)" />
 </svg>

@@ -14,6 +14,7 @@ import {
   skillColor,
   type Continent,
 } from '../data/continents';
+import { paletteEntry } from '../data/palette';
 import { skillTileQuota, type SkillArea } from '../data/skills';
 import { HEX, HIGHLIGHT, LAND_COLOR, PLANET, REGIONS } from './config';
 import { buildHexSphereGrid, type HexSphereGrid, type HexTile } from './hexGrid';
@@ -26,13 +27,8 @@ export interface SkillIslandsBuild {
   readonly skillDirections: readonly Vector3[];
   /** Shared hex grid instance for polar caps and spatial alignment. */
   readonly grid: HexSphereGrid;
-  /** Where each continent's silhouette frame is anchored, in CONTINENTS order.
-   *  Exposed so the outline can be inspected in the frame it was authored in. */
-  readonly continentAnchors: readonly Vector3[];
   /** Union of every tile id owned by any skill (for ocean exclusion). */
   readonly landTileIds: ReadonlySet<number>;
-  /** Per-skill tile ids — the exact quota each land was allocated (FR-022). */
-  readonly landTilesBySkill: ReadonlyMap<string, readonly number[]>;
   dispose(): void;
 }
 
@@ -587,7 +583,6 @@ export function buildSkillIslands(skills: readonly SkillArea[]): SkillIslandsBui
   }
 
   const landTileIds = new Set<number>(owner.keys());
-  const landTilesBySkill = new Map<string, readonly number[]>();
   const meshes: Mesh[] = [];
   const skillDirections: Vector3[] = [];
 
@@ -596,10 +591,8 @@ export function buildSkillIslands(skills: readonly SkillArea[]): SkillIslandsBui
     if (tileIds.length === 0) {
       return;
     }
-    landTilesBySkill.set(skill.id, tileIds);
-
     const continent = CONTINENTS.find((entry) => entry.skills.includes(skill.id));
-    const baseColor = continent ? skillColor(skill, continent) : '#F1FFFA';
+    const baseColor = continent ? skillColor(skill, continent) : paletteEntry('mintCream').hex;
     const tileColor = new Color();
 
     // Per-skill representative direction = centroid of its tiles, so the scroll
@@ -663,9 +656,7 @@ export function buildSkillIslands(skills: readonly SkillArea[]): SkillIslandsBui
     meshes,
     skillDirections,
     grid,
-    continentAnchors: anchors,
     landTileIds,
-    landTilesBySkill,
     dispose() {
       for (const mesh of meshes) {
         mesh.geometry.dispose();

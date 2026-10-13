@@ -1,4 +1,5 @@
 import { skillColor, type Continent } from '../data/continents';
+import { paletteEntry } from '../data/palette';
 import { skillLevelLabel, type SkillArea } from '../data/skills';
 
 /**
@@ -45,7 +46,7 @@ export class InfoCard {
   }
 
   showSkill(skill: SkillArea, continent: Continent | null): void {
-    const color = continent ? skillColor(skill, continent) : '#F1FFFA';
+    const color = continent ? skillColor(skill, continent) : paletteEntry('mintCream').hex;
     this.root.style.setProperty('--skill-color', color);
     // Continent name in the kicker; omit the line entirely when unknown.
     this.kicker.textContent = continent ? continent.name : '';

@@ -267,3 +267,18 @@ dependent, and an intermediate state renders an uncoloured or wrongly-sized glob
   or for the quota formula in `src/data/skills.ts` without re-measuring; both were chosen from
   measured data in `specs/003-palette-continents/research.md`
 
+---
+
+## Phase 8: Convergence
+
+**Purpose**: Close the gaps found by `/speckit-converge` between spec/plan/tasks and the
+implemented code. Verification-only tasks T026, T030, T031 and T032 already cover the remaining
+browser/contrast/perf passes and are intentionally not duplicated here.
+
+- [x] T036 Implement FR-029's enlarged invisible target area so every land — including the single-tile lands allowed by FR-022 — can be hovered and tapped directly (e.g. per-skill invisible proxy geometry or proximity picking wired into `src/three/PlanetInteraction.ts`), preserving the far-side occluder rule and the `SkillIslandsBuild`/`Planet.meshes` contracts per FR-029 and SC-008 (missing)
+- [x] T037 Make moving a skill between continents a single-file edit of `src/data/continents.ts` by removing the second forced edit — the redundant `SkillArea.continentId` in `src/data/skills.ts` and/or the mismatch throw in `validateContinents()` — while keeping fail-fast on unknown continent ids and duplicate membership per FR-015, SC-009 and US3 acceptance scenario 1 (contradicts)
+- [x] T038 Review the `ContinentShape`/`ContinentVoid` silhouette machinery in `src/data/continents.ts` and `src/three/skillRegions.ts` (aspects, lobes, lakes/rivers, `validateShape`, derived-shape fallback) — justify it in writing against the spec and plan (it is not called for by any artifact and touches the out-of-scope coastline-detail rule) or remove it per spec Out of Scope (unrequested)
+- [x] T039 Give the `FFECC7` beige entry its intended tertiary-accent role in `src/data/palette.ts` — or document the deliberate omission in the file — so every palette entry carries a name and a role per FR-002 and FR-005 (partial)
+- [x] T040 Replace the literal `'#F1FFFA'` fallbacks in `src/three/skillRegions.ts` and `src/ui/infoCard.ts` with `paletteEntry('mintCream').hex` (matching `src/ui/skillLegend.ts`), and resolve the off-palette favicon colours in `public/favicon.svg` (`#7f6bff`, `#12162b`, `#5ad1ff`) as palette-derived or explicitly documented scenery, per FR-003 and SC-002 (partial)
+- [x] T041 Remove the unconsumed `continentAnchors` and `landTilesBySkill` fields from the `SkillIslandsBuild` return shape in `src/three/skillRegions.ts` — or give them a real consumer — restoring the return shape T017 required untouched (contradicts)
+

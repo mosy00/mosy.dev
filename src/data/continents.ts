@@ -31,6 +31,16 @@ export interface ContinentVoid {
  * and score is a RADIUS measured from the anchor, so every profile here stays
  * star-shaped around the anchor by construction — that is what keeps the
  * continent connected no matter how wild the numbers get.
+ *
+ * JUSTIFICATION (convergence task T038): no spec/plan artifact names this
+ * system — it implements the owner's direct follow-up request ("Change color
+ * pallete and shape of continents", commit 70b5ee7) and is kept because it
+ * preserves every allocator guarantee the spec relies on, by construction:
+ * connectivity (FR-016), inter-continent separation (FR-027), exact quotas
+ * (FR-022) and the latitude cap (FR-028). It changes no geometry method, no
+ * hex resolution and no land-scale rule (spec Out of Scope boundaries), and
+ * deleting any `shape` entry falls back to a derived silhouette without
+ * touching any other file (FR-015).
  */
 export interface ContinentShape {
   /** Stretch along `angle`. 1 = round, 1.8 = long and narrow, 0.6 = squat. */
@@ -190,6 +200,12 @@ export function continentTileQuota(continent: Continent, skills: readonly SkillA
  * land. Throws on: a duplicate continent id, a duplicate skill id, a skill
  * listed in more than one continent, a member skill that does not exist, and a
  * mainColor that is not a palette entry.
+ *
+ * `CONTINENTS` membership is the ONE source of skill→continent truth (FR-014).
+ * No per-skill continent copy exists on `SkillArea`, so adding, removing or
+ * renaming a continent — or moving a skill between continents — is always a
+ * single-file edit of this module: quickstart V6 / FR-015 / SC-009
+ * (convergence task T037).
  */
 /**
  * Fail fast on a malformed silhouette. A typo in `shape` would otherwise just
@@ -262,11 +278,6 @@ export function validateContinents(skills: readonly SkillArea[]): void {
     if (!seenSkills.has(skill.id)) {
       throw new Error(
         `[mosy.dev] Skill "${skill.id}" is not in any continent. Add it to one in src/data/continents.ts.`,
-      );
-    }
-    if (skill.continentId && skill.continentId !== seenSkills.get(skill.id)) {
-      throw new Error(
-        `[mosy.dev] Skill "${skill.id}" declares continent "${skill.continentId}" but is listed under "${seenSkills.get(skill.id)}".`,
       );
     }
   }

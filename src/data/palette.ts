@@ -19,6 +19,7 @@ export type PaletteRole =
   | 'buttonHover'
   | 'accent'
   | 'accentAlt'
+  | 'accentTertiary'
   | 'surface';
 
 export type PaletteEntryId =
@@ -47,7 +48,7 @@ export const PALETTE: readonly PaletteEntry[] = [
   { id: 'mintCream', hex: '#F1FFFA', role: ['textPrimary'], label: 'Mint cream — primary text' },
   { id: 'deepBlue', hex: '#193D6A', role: ['surface', 'buttonHover'], label: 'Deep blue — hover / surface' },
   { id: 'paleAmber', hex: '#E1E06C', role: ['accentAlt'], label: 'Pale amber — lighter yellow' },
-  { id: 'beige', hex: '#FFECC7', role: [], label: 'Beige — spare tint' },
+  { id: 'beige', hex: '#FFECC7', role: ['accentTertiary'], label: 'Beige — tertiary accent' },
 ];
 
 /** Lookup a palette entry by id. Throws on an unknown id (fail fast at boot). */
@@ -147,6 +148,7 @@ export function applyPaletteVariables(target: HTMLElement): void {
   const accentAlt = byRole('accentAlt');
   const button = byRole('button');
   const surface = byRole('surface');
+  const tertiary = byRole('accentTertiary');
   const amber = paletteEntry('amber');
 
   const vars: Record<string, string> = {
@@ -159,6 +161,7 @@ export function applyPaletteVariables(target: HTMLElement): void {
     '--muted': muted.hex,
     '--accent': accent.hex,
     '--accent-2': accentAlt.hex,
+    '--accent-3': tertiary.hex,
     '--accent-text': amber.hex,
     '--button': button.hex,
     '--surface': surface.hex,
