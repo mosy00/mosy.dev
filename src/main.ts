@@ -1,6 +1,8 @@
 import './styles/main.css';
 import { initPlanetTour } from './animations/planetTour';
 import { initSectionAnimations } from './animations/scrollAnimations';
+import { continentForSkill, validateContinents } from './data/continents';
+import { applyPaletteVariables } from './data/palette';
 import { SKILL_AREAS } from './data/skills';
 import { Experience } from './three/Experience';
 import { prefersReducedMotion } from './three/motionPrefs';
@@ -25,6 +27,15 @@ export function disposeExperience(): void {
 }
 
 function boot(): void {
+  // The palette owns every colour on the site. Apply it FIRST, before the
+  // renderer or any UI exists, so nothing is ever sampled from a pre-palette
+  // stylesheet (T011).
+  applyPaletteVariables(document.documentElement);
+
+  // Fail fast on a malformed continent map rather than rendering an uncoloured
+  // land (T027).
+  validateContinents(SKILL_AREAS);
+
   const canvas = document.querySelector<HTMLCanvasElement>('#webgl');
   if (!canvas) {
     throw new Error('#webgl canvas not found');
@@ -57,7 +68,7 @@ function boot(): void {
       legend.setActive(skillId);
       const skill = SKILL_AREAS.find((entry) => entry.id === skillId) ?? null;
       if (skill) {
-        infoCard?.showSkill(skill);
+        infoCard?.showSkill(skill, continentForSkill(skill.id));
       } else {
         infoCard?.hide();
       }

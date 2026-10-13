@@ -24,19 +24,21 @@ npm run preview    # serve the production build
 
 ```
 src/
-├─ main.ts                  # entry: boots scene, smooth scroll, nav, animations
-├─ styles/main.css          # tokens, layout, sections
+├─ main.ts                  # entry: applies the palette, boots scene, scroll, nav, animations
+├─ styles/main.css          # layout + sections; NO colour literals (all injected from palette.ts)
 ├─ data/
-│  └─ skills.ts             # skill areas + shared expertise→color formula
+│  ├─ palette.ts            # THE PALETTE — 8 colours + roles; the single source of colour truth
+│  ├─ continents.ts         # the continent map (4 continents, members, per-skill tint ramp)
+│  └─ skills.ts             # skills + expertise→tile-quota formula
 ├─ three/
-│  ├─ config.ts             # tuning constants (camera fit, planet, regions, ocean, tour)
+│  ├─ config.ts             # tuning constants (camera fit, planet, land colour, ocean, tour)
 │  ├─ Experience.ts         # renderer, camera, lights, resize/fit, render loop, dispose
 │  ├─ Planet.ts             # the planet group: lands + ocean + caps, float, highlight
 │  ├─ PlanetControls.ts     # drag-to-rotate with inertia + idle spin
 │  ├─ PlanetInteraction.ts  # raycast hover + occluder-sphere rule → skill highlight
 │  ├─ hexGrid.ts            # geodesic dual hex grid (the tile lattice)
 │  ├─ tileFan.ts            # shared flush fan-builder (lands/ocean/caps at one radius)
-│  ├─ skillRegions.ts       # land assignment: seeds, erosion, flood fill, 1 mesh/skill
+│  ├─ skillRegions.ts       # continent growth + per-skill partition, 1 mesh/skill
 │  ├─ oceanTiles.ts         # merged translucent hex ocean shell
 │  ├─ polarLands.ts         # the two white ice caps
 │  └─ motionPrefs.ts        # prefers-reduced-motion helper
@@ -66,21 +68,30 @@ src/
   The sea is ~20 % transparent and land/cap meshes render both sides, so continents on the
   far hemisphere read *through* the water like a glass marble — while the sea's own far
   hemisphere stays culled, so you never see a jumbled second ocean.
-- **Connected lands & distinct shapes** — each skill is ONE connected landmass (primary seed
-  plus clustered satellites, so its parts always merge) with its own silhouette profile
-  (elliptical aspect + 3–5 radial lobes). Expertise visibly buys territory (100 % is ≥ 2× a
-  40 % land) and deepens the tint via the shared formula in `data/skills.ts`; a symmetric
-  erosion pass keeps lands from ever touching, and land stops at 60° latitude, leaving a moat
-  to the 66.5° ice caps.
+- **Continents, not scattered islands** — the skills are grouped into **four named
+  continents** (`data/continents.ts`): Front-end & Interface, Back-end & Systems, Graphics &
+  Motion, Creative & Quality. Each continent is **one connected landmass** carrying one palette
+  colour, and its member skills are shades/tints of that colour stepped by expertise rank, so
+  siblings stay distinguishable without a second colour dimension. Distinct continents can never
+  touch: a tile adjacent to another continent is refused during growth, so separation holds by
+  construction rather than by a cleanup pass.
+- **Smaller lands, more ocean** — land area follows one measured linear rule,
+  `tiles = max(1, floor(62.5 × expertise − 12.5))`: 100 % → 50 tiles, 60 % → 25, and a skill below
+  20 % → a single tile. 50 tiles is 1.95 % of the globe (China is 1.88 %), and land area follows
+  the skill list directly — 10 skills covered 13.78 % of the surface (353 of 2,562 tiles), the
+  current 13 cover 18.15 % (465 tiles), against ~89 % before continents existed, so the planet
+  reads as mostly ocean. Land still stops at 60° latitude, leaving a ≥ 6.5° moat to the 66.5° ice
+  caps.
 - **Earth-like drag** — free spin left/right; vertical drag is clamped to ±45° so the
   poles always stay up/down, and follows the pointer: dragging up tips the top of the globe away
   and reveals its lower parts (the original direction). A vertical flick keeps gliding in that same
   direction and eases out smoothly (`pitchGlideDecay`, separate from the yaw damping). Inertia then
   settles into the idle spin, and `touch-action: pan-y` keeps vertical page scrolling usable on touch.
-- **Hover (step 3)** — a raycaster picks the island under the pointer (suppressed while
-  dragging): the active island glows (GSAP-tweened emissive), the rest dim, the legend row
-  lights up, and an info card shows name, blurb and an expertise meter. Legend rows are
-  buttons, so keyboard focus triggers the same highlight.
+- **Hover (step 3)** — a raycaster picks the land under the pointer (suppressed while
+  dragging): the active land glows (GSAP-tweened emissive), the rest dim, the legend row
+  lights up, and an info card shows the **continent name** as its kicker above the skill name,
+  blurb and an expertise meter. Legend rows are buttons grouped under continent headers, so
+  keyboard focus triggers the same highlight.
 - **Scroll tour (step 4)** — the planet section is tall (420vh) with a sticky stage;
   scrolling through it drives one scrubbed GSAP timeline that sweeps an outer "tour group"
   ~180° about the poles and grows the globe by 1.111× (from 0.9315× to 1.035× the smaller viewport
