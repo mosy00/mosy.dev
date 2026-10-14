@@ -18,8 +18,8 @@
 
 **Purpose**: Baseline gates and working branch
 
-- [ ] T001 Verify clean baseline on branch `004-planet-interaction-refinement`: `npm install`, `npm run typecheck` exits 0 in repo root
-- [ ] T002 Record pre-change behavior notes (drag tilt + scroll pole-flip, hover glow) per quickstart.md V1/V4 in specs/004-planet-interaction-refinement/quickstart.md
+- [X] T001 Verify clean baseline on branch `004-planet-interaction-refinement`: `npm install`, `npm run typecheck` exits 0 in repo root
+- [X] T002 Record pre-change behavior notes (drag tilt + scroll pole-flip, hover glow) per quickstart.md V1/V4 in specs/004-planet-interaction-refinement/quickstart.md
 
 ---
 
@@ -29,8 +29,8 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T003 Set `dragGroup.rotation.order = 'YXZ'` in src/three/Planet.ts so pitch stays latitude-like at any yaw (research D1)
-- [ ] T004 [P] Add interaction constants to src/three/config.ts: label float height + text sizing, hover tint lightness lift + lift height + tap timeout, re-center target = PLANET.initialTilt
+- [X] T003 Set `dragGroup.rotation.order = 'YXZ'` in src/three/Planet.ts so pitch stays latitude-like at any yaw (research D1)
+- [X] T004 [P] Add interaction constants to src/three/config.ts: label float height + text sizing, hover tint lightness lift + lift height + tap timeout, re-center target = PLANET.initialTilt
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -42,8 +42,8 @@
 
 **Independent Test**: quickstart.md V1 — drag to strong tilt, scroll top-to-bottom, poles return near entry alignment with no jumps; scroll-back keeps entry tilt
 
-- [ ] T005 [US1] Implement tilt-only scroll re-centering in src/animations/planetTour.ts: ease dragGroup pitch toward PLANET.initialTilt with scroll progress, never write yaw, never write while pointer down, one-way stick on scroll-back (research D2, contracts C1)
-- [ ] T006 [US1] Implement reduced-motion static re-center in src/animations/planetTour.ts: single set of dragGroup pitch to entry tilt, no timeline (research D5, contracts C5)
+- [X] T005 [US1] Implement tilt-only scroll re-centering in src/animations/planetTour.ts: ease dragGroup pitch toward PLANET.initialTilt with scroll progress, never write yaw, never write while pointer down, one-way stick on scroll-back (research D2, contracts C1)
+- [X] T006 [US1] Implement reduced-motion static re-center in src/animations/planetTour.ts: single set of dragGroup pitch to entry tilt, no timeline (research D5, contracts C5)
 
 ---
 
@@ -53,16 +53,16 @@
 
 **Independent Test**: quickstart.md V2 — identical ~150px up-drag at three scroll positions reveals lower latitudes each time; flick glide continues dragged direction
 
-- [ ] T007 [US1] [US2] Compute yaw-compensated drag deltas in src/three/PlanetControls.ts so screen-space up maps to latitude pitch at any accumulated yaw (research D1, contracts C2)
-- [ ] T008 [US2] Fix glide seeding/integration in src/three/PlanetControls.ts so release velocity continues the dragged direction at any scroll position (research D1, contracts C2)
+- [X] T007 [US1] [US2] Compute yaw-compensated drag deltas in src/three/PlanetControls.ts so screen-space up maps to latitude pitch at any accumulated yaw (research D1, contracts C2)
+- [X] T008 [US2] Fix glide seeding/integration in src/three/PlanetControls.ts so release velocity continues the dragged direction at any scroll position (research D1, contracts C2)
 ## Phase 5: User Story 3 - Subtle hover emphasis with lift (Priority: P2)
 
 **Goal**: Close same-hue tint replaces bright glow; hovered land lifts slightly and settles back; tap auto-clears
 
 **Independent Test**: quickstart.md V4 — hover each land reads "same color, bolder" with visible lift, clears flush on leave; off-canvas leave and tap both clear
 
-- [ ] T009 [P] [US3] Derive per-land close-tint hover color in src/three/skillRegions.ts (same hue family, lightness +~0.08–0.12, saturation held) and retune HIGHLIGHT.active in src/three/config.ts down from white-hot 1.35 (research D4, contracts C4)
-- [ ] T010 [US3] Implement hover lift + settle in src/three/Planet.ts setHighlighted: small radial offset while hovered, flush restore on null, tap auto-clear ~600ms, instant apply under reduced motion (research D4/D5, contracts C4)
+- [X] T009 [P] [US3] Derive per-land close-tint hover color in src/three/skillRegions.ts (same hue family, lightness +~0.08–0.12, saturation held) and retune HIGHLIGHT.active in src/three/config.ts down from white-hot 1.35 (research D4, contracts C4)
+- [X] T010 [US3] Implement hover lift + settle in src/three/Planet.ts setHighlighted: small radial offset while hovered, flush restore on null, tap auto-clear ~600ms, instant apply under reduced motion (research D4/D5, contracts C4)
 
 ---
 
@@ -72,9 +72,9 @@
 
 **Independent Test**: quickstart.md V3 — every front-facing land name readable off-globe; 180° rotation swaps readable/hidden sets; crowded lands show front-most label only
 
-- [ ] T011 [P] [US4] Create sprite label system in src/three/landLabels.ts: one THREE.Sprite per skill (text from src/data/skills.ts names), positioned at skillDirections × (R + floatHeight), parented to dragGroup (research D3, contracts C3)
-- [ ] T012 [US4] Implement label visibility in src/three/landLabels.ts via PlanetInteraction occluder-sphere rule: hide far-side labels, front-most-only on overlap, smaller type on small screens (research D3, contracts C3)
-- [ ] T013 [US4] Wire labels into lifecycle in src/main.ts (or boot owner): create after Planet, dispose with experience, no-op path when WebGL labels unavailable with legend/info-card fallback intact (spec Edge Cases, contracts C3)
+- [X] T011 [P] [US4] Create sprite label system in src/three/landLabels.ts: one THREE.Sprite per skill (text from src/data/skills.ts names), positioned at skillDirections × (R + floatHeight), parented to dragGroup (research D3, contracts C3)
+- [X] T012 [US4] Implement label visibility in src/three/landLabels.ts via PlanetInteraction occluder-sphere rule: hide far-side labels, front-most-only on overlap, smaller type on small screens (research D3, contracts C3)
+- [X] T013 [US4] Wire labels into lifecycle in src/main.ts (or boot owner): create after Planet, dispose with experience, no-op path when WebGL labels unavailable with legend/info-card fallback intact (spec Edge Cases, contracts C3)
 
 ---
 
@@ -82,9 +82,9 @@
 
 **Purpose**: Full validation, gates, and cleanup across all stories
 
-- [ ] T014 Run full quickstart.md V1–V5 validation in specs/004-planet-interaction-refinement/quickstart.md and fix regressions across src/three/ and src/animations/
-- [ ] T015 [P] Mobile pass in src/three/landLabels.ts and src/three/PlanetInteraction.ts: tap-to-identify brief emphasis, no stuck hover, legible labels without covering neighbors (FR-013, contracts C5)
-- [ ] T016 Final gate: `npm run typecheck` and `npm run build` both exit 0, `git status` confined to src/three/, src/animations/, src/data/ in repo root
+- [ ] T014 Run full quickstart.md V1–V5 validation in specs/004-planet-interaction-refinement/quickstart.md and fix regressions across src/three/ and src/animations/ (browser pass pending — owner runs V1–V5 via `npm run dev`)
+- [X] T015 [P] Mobile pass in src/three/landLabels.ts and src/three/PlanetInteraction.ts: tap-to-identify brief emphasis, no stuck hover, legible labels without covering neighbors (FR-013, contracts C5)
+- [X] T016 Final gate: `npm run typecheck` and `npm run build` both exit 0, `git status` confined to src/three/, src/animations/, src/data/ in repo root
 
 ## Dependencies & Execution Order
 

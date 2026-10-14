@@ -7,6 +7,7 @@ import { SKILL_AREAS } from './data/skills';
 import { Experience } from './three/Experience';
 import { prefersReducedMotion } from './three/motionPrefs';
 import { PlanetInteraction } from './three/PlanetInteraction';
+import { LandLabels } from './three/landLabels';
 import { InfoCard } from './ui/infoCard';
 import { initAnchorNavigation } from './ui/nav';
 import { renderSkillLegend } from './ui/skillLegend';
@@ -82,13 +83,16 @@ function boot(): void {
         controls: activeExperience.controls,
         onHover: (skillId) => applyHover(skillId),
       });
+      // US4 / research D3: one floating sprite label per land, parented to
+      // the drag group; Experience ticks and disposes them with the loop.
+      activeExperience.attachLabels(new LandLabels(activeExperience.planet));
     }
   }
 
   // Legend must exist before animations run so its items get revealed.
   activeExperience.setReducedMotion(prefersReducedMotion());
   initSectionAnimations();
-  disposeTour = initPlanetTour(activeExperience.planet);
+  disposeTour = initPlanetTour(activeExperience.planet, activeExperience.controls);
 }
 
 boot();

@@ -9,6 +9,13 @@ Validate with `npm run dev` and manual trials (behaviors are visual/interactive;
 - `npm install`, then `npm run dev`; open the planet section.
 - `npm run typecheck` and `npm run build` must stay green (constitution gates).
 
+## Baseline notes (recorded 2026-10-13, pre-change)
+
+- V1 symptom confirmed: drag-tilt + scroll compounds — poles swing toward the viewer as scroll accumulates; no re-centering exists (tour only writes `tourGroup` yaw/scale).
+- V2 symptom confirmed: with default XYZ order on `dragGroup`, vertical drag reverses past ~180° total yaw (tour sweep past half-section + user spin) — identical up-drag reveals upper latitudes at end-scroll vs lower latitudes at entry.
+- V4 symptom confirmed: `HIGHLIGHT.active: 1.35` emissive on same-hue base reads as a hot white-ish flare; no lift exists (lands flush at all times).
+- Labels: none exist — lands are identified only via legend/info-card.
+
 ## V1 — Scroll re-centers tilt (C1, SC-001)
 
 1. Drag the globe to a strong tilt (poles visibly off-axis).

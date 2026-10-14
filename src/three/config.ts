@@ -84,9 +84,55 @@ export const OCEAN = {
 
 export const HIGHLIGHT = {
   // Resting glow of an island, hover glow, and the dimmed rest while hovering.
+  // US3 / D4: active was 1.35 — a hot white-ish flare the owner flagged as too
+  // bright. The hovered land is now "bolded" by its CLOSE-TINT emissive
+  // (HOVER.tintLightnessLift, same hue family) at a modest intensity instead.
   base: 0.22,
-  active: 1.35,
+  active: 0.6,
   dimmed: 0.05,
+} as const;
+
+// US3 / research D4 — hover emphasis is a CLOSE TINT plus a small lift, never
+// a bright flash: same hue family as the land, lightness lifted slightly.
+export const HOVER = {
+  // Close-tint derivation: lightness lift applied to the land's own base HSL.
+  tintLightnessLift: 0.1,
+  // Radial lift of the hovered land (world units; ~6% of R = subtle pop-up).
+  liftHeight: 0.075,
+  // Touch tap emphasis auto-clear timeout (FR-012 / research D5).
+  tapTimeoutMs: 600,
+  // Tween speed for tint/lift; reduced motion applies instantly (duration 0).
+  tweenDuration: 0.35,
+} as const;
+
+// US4 / research D3 — floating land labels: one sprite per land, hovering
+// above the shell, smaller type on small screens.
+export const LABEL = {
+  // Float height above the shell as a fraction of the radius.
+  floatHeight: 0.12,
+  // Sprite world height — little Earth-map-style marker, not a floating
+  // title (owner follow-up 2026-10-13: "a little label just like on a real
+  // Earth map", then "1 size smaller" the same day).
+  worldHeight: 0.055,
+  // Canvas text resolution (bumped to keep the smaller sprite crisp on
+  // high-DPI screens; does not change on-screen size, only texture sharpness).
+  fontPx: 64,
+  fontPxCompact: 44,
+  compactBreakpoint: 768,
+  // Overlap test padding: screen-space radius multiplier for the front-most
+  // label rule (clarification 2).
+  overlapPad: 1.15,
+} as const;
+
+// Continent labels (owner follow-up 2026-10-13): the region heading above a
+// continent — larger than the land labels and tinted with the continent's
+// own palette colour, floating one level above the land labels like the
+// region name on a real Earth map.
+export const CONTINENT_LABEL = {
+  // Twice the land-label height — clearly the heading, same typeface.
+  worldHeight: 0.11,
+  // Floats above the land-label level (LABEL.floatHeight = 0.12).
+  floatHeight: 0.16,
 } as const;
 
 export const PLANET_CONTROLS = {
@@ -107,10 +153,14 @@ export const PLANET_CONTROLS = {
 
 export const TOUR = {
   // Calm scroll tour (research D7): one yaw sweep plus growth across the
-  // planet section, at constant pitch so the poles never move. Growth is the
-  // ratio between the two sizes above: 1.035 / 0.9315 ≈ 1.111.
+  // planet section. Growth is the ratio between the two sizes above:
+  // 1.035 / 0.9315 ≈ 1.111. US1 / D2: pitch is eased back toward
+  // PLANET.initialTilt while scrolling (tilt-only, yaw never written).
   sweepYaw: Math.PI,
   growthScale: 1.111,
   scrub: 0.8,
+  // Per-scroll-tick ease factor pulling drag pitch toward the entry tilt —
+  // converges smoothly across the section height without snapping (US1).
+  recenterEase: 0.12,
 } as const;
 
