@@ -7,7 +7,7 @@ import {
   type Mesh,
   type PerspectiveCamera,
 } from 'three';
-import { PLANET } from './config';
+import { HOVER, PLANET } from './config';
 import type { PlanetControls } from './PlanetControls';
 
 /**
@@ -78,6 +78,8 @@ export class PlanetInteraction {
   private readonly hitToCenter = new Vector3();
   private readonly hitTargets: LandHitTarget[] = [];
   private hoveredSkillId: string | null = null;
+  /** Pending tap-emphasis auto-clear (US3 / FR-012, research D5). */
+  private tapClearTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(options: PlanetInteractionOptions) {
     this.options = options;
@@ -104,6 +106,7 @@ export class PlanetInteraction {
   }
 
   dispose(): void {
+    this.clearTapTimer();
     this.options.canvas.removeEventListener('pointermove', this.handlePointerMove);
     this.options.canvas.removeEventListener('pointerdown', this.handlePointerDown);
     this.options.canvas.removeEventListener('pointerleave', this.handlePointerLeave);
@@ -114,6 +117,8 @@ export class PlanetInteraction {
       this.setHovered(null);
       return;
     }
+    // A live hover owns the emphasis now — cancel any pending tap auto-clear.
+    this.clearTapTimer();
     this.updatePointer(event);
     this.pick();
   };
@@ -121,10 +126,18 @@ export class PlanetInteraction {
   /** A tap has no preceding pointermove — pick on press so touch can select. */
   private readonly handlePointerDown = (event: PointerEvent): void => {
     this.updatePointer(event);
+    const hadHover = this.hoveredSkillId !== null;
     this.pick();
+    // US3 / FR-012 / D5: a tap (no preceding hover) gets a brief emphasis that
+    // auto-clears; a live hover (desktop click on an already-hovered land, or
+    // any subsequent pointermove) takes over and is never timed out.
+    if (!hadHover) {
+      this.scheduleTapClear();
+    }
   };
 
   private readonly handlePointerLeave = (): void => {
+    this.clearTapTimer();
     this.setHovered(null);
   };
 
@@ -214,5 +227,23 @@ export class PlanetInteraction {
     }
     this.hoveredSkillId = skillId;
     this.options.onHover(skillId);
+  }
+
+  /** US3 / FR-012: tap emphasis clears itself unless a hover re-picks first. */
+  private scheduleTapClear(): void {
+    this.clearTapTimer();
+    this.tapClearTimer = setTimeout(() => {
+      this.tapClearTimer = null;
+      if (!this.options.controls.isDragging) {
+        this.setHovered(null);
+      }
+    }, HOVER.tapTimeoutMs);
+  }
+
+  private clearTapTimer(): void {
+    if (this.tapClearTimer !== null) {
+      clearTimeout(this.tapClearTimer);
+      this.tapClearTimer = null;
+    }
   }
 }

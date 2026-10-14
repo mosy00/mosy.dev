@@ -3,7 +3,10 @@ import { PLANET_CONTROLS } from './config';
 
 interface PlanetControlsOptions {
   readonly domElement: HTMLElement;
-  readonly target: Object3D;
+  /** Yaw target — receives the free spin (inner groups; see Planet). */
+  readonly yawTarget: Object3D;
+  /** Tilt target — the OUTERMOST group; receives the clamped tilt. */
+  readonly pitchTarget: Object3D;
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -18,20 +21,26 @@ function clamp(value: number, min: number, max: number): number {
  */
 export class PlanetControls {
   private readonly domElement: HTMLElement;
-  private readonly target: Object3D;
+  private readonly yawTarget: Object3D;
+  private readonly pitchTarget: Object3D;
   private readonly velocity = { x: 0, y: 0 };
   /**
-   * Pitch sign, applied EXACTLY ONCE — in `onPointerMove`.
+   * Tilt sign, applied EXACTLY ONCE — in `onPointerMove`.
    *
-   * `rotation.x` is positive when the globe's top tilts TOWARD the camera.
-   * Pointer `deltaY` grows downward, so dragging up (negative deltaY) yields a
-   * negative angle, which tips the top away and brings the LOWER parts of the
-   * globe into view — the "grab and turn" feel. `+1` is therefore correct, and
-   * matches the pre-existing behaviour this constant preserves.
+   * Feature 004 / research D1 (revised 2026-10-13): the tilt is the
+   * OUTERMOST rotation (`pitchTarget` = planet.tiltTarget), with every yaw —
+   * scroll tour + manual drag — nested INSIDE it. The pole therefore depends
+   * only on the tilt, never on accumulated yaw, so the same screen gesture
+   * maps to the same latitude tilt at any scroll position and after any
+   * amount of manual spinning: the past-180° reversal (scroll OR manual) is
+   * gone by construction. Dragging up (negative deltaY) yields a negative
+   * tilt, tipping the top away from the camera and bringing the LOWER
+   * latitudes into view — identical everywhere (US2 / contracts C2).
    *
    * The sign must be applied here and ONLY here: `velocity.x` is seeded from
-   * this already-signed pitch, so `update()` integrates it as-is. Negating in
-   * both places cancels out and makes the planet spin backwards on release
+   * this already-signed tilt, so `update()` integrates it as-is — the glide
+   * continues in the dragged direction at every scroll position (FR-006).
+   * Negating in both places cancels out and reverses the release glide
    * (the bug reported 2026-10-04).
    */
   private static readonly PITCH_DIRECTION = 1;
@@ -43,7 +52,8 @@ export class PlanetControls {
 
   constructor(options: PlanetControlsOptions) {
     this.domElement = options.domElement;
-    this.target = options.target;
+    this.yawTarget = options.yawTarget;
+    this.pitchTarget = options.pitchTarget;
     this.bindEvents();
   }
 
@@ -53,10 +63,10 @@ export class PlanetControls {
     }
     const decay = Math.exp(-PLANET_CONTROLS.damping * deltaTime);
     this.velocity.y *= decay;
-    this.target.rotation.y += this.velocity.y * deltaTime;
+    this.yawTarget.rotation.y += this.velocity.y * deltaTime;
 
     // Vertical inertia. `velocity.x` was seeded in `onPointerMove` from the
-    // already-signed pitch, so PITCH_DIRECTION is deliberately NOT applied here
+    // already-signed tilt, so PITCH_DIRECTION is deliberately NOT applied here
     // — a second negation would cancel the drag's own sign and make the planet
     // reverse the moment it is released (reported 2026-10-04). Drag and glide
     // therefore always agree on direction.
@@ -66,12 +76,16 @@ export class PlanetControls {
     // planet cannot spring back off the clamp.
     const pitchDecay = Math.exp(-PLANET_CONTROLS.pitchGlideDecay * deltaTime);
     this.velocity.x *= pitchDecay;
-    const nextPitch = this.target.rotation.x + this.velocity.x * deltaTime;
+    const nextPitch = this.pitchTarget.rotation.x + this.velocity.x * deltaTime;
     if (nextPitch > PLANET_CONTROLS.maxPitch || nextPitch < -PLANET_CONTROLS.maxPitch) {
-      this.target.rotation.x = clamp(nextPitch, -PLANET_CONTROLS.maxPitch, PLANET_CONTROLS.maxPitch);
+      this.pitchTarget.rotation.x = clamp(
+        nextPitch,
+        -PLANET_CONTROLS.maxPitch,
+        PLANET_CONTROLS.maxPitch,
+      );
       this.velocity.x = 0;
     } else {
-      this.target.rotation.x = nextPitch;
+      this.pitchTarget.rotation.x = nextPitch;
     }
 
     // Ease yaw velocity towards the idle spin so the planet never dies.
@@ -141,14 +155,14 @@ export class PlanetControls {
     this.lastMoveTime = event.timeStamp;
 
     const yaw = deltaX * PLANET_CONTROLS.rotationPerPixel;
-    // PITCH_DIRECTION keeps the vertical mapping in one place. It is applied
-    // here only: `velocity.x` below is seeded from this same signed pitch, and
-    // `update()` integrates that value as-is (see PITCH_DIRECTION's comment).
+    // PITCH_DIRECTION keeps the vertical mapping in one place (the tilt is the
+    // outermost rotation — see the constant — so this single sign is all the
+    // screen-space mapping needs at ANY accumulated yaw).
     const pitch = PlanetControls.PITCH_DIRECTION * deltaY * PLANET_CONTROLS.rotationPerPixel;
 
-    this.target.rotation.y += yaw;
-    this.target.rotation.x = clamp(
-      this.target.rotation.x + pitch,
+    this.yawTarget.rotation.y += yaw;
+    this.pitchTarget.rotation.x = clamp(
+      this.pitchTarget.rotation.x + pitch,
       -PLANET_CONTROLS.maxPitch,
       PLANET_CONTROLS.maxPitch,
     );

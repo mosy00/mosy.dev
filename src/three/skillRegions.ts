@@ -16,7 +16,7 @@ import {
 } from '../data/continents';
 import { paletteEntry } from '../data/palette';
 import { skillTileQuota, type SkillArea } from '../data/skills';
-import { HEX, HIGHLIGHT, LAND_COLOR, PLANET, REGIONS } from './config';
+import { HEX, HIGHLIGHT, HOVER, LAND_COLOR, PLANET, REGIONS } from './config';
 import { buildHexSphereGrid, type HexSphereGrid, type HexTile } from './hexGrid';
 import { buildTileFan } from './tileFan';
 
@@ -595,6 +595,17 @@ export function buildSkillIslands(skills: readonly SkillArea[]): SkillIslandsBui
     const baseColor = continent ? skillColor(skill, continent) : paletteEntry('mintCream').hex;
     const tileColor = new Color();
 
+    // US3 / research D4: close-tint hover sibling — same hue family, lightness
+    // lifted slightly. Stored per land so Planet.setHighlighted tweens the
+    // emissive to a "bolder, not brighter" tint on hover.
+    const baseHsl = { h: 0, s: 0, l: 0 };
+    new Color(baseColor).getHSL(baseHsl);
+    const hoverTint = new Color().setHSL(
+      baseHsl.h,
+      baseHsl.s,
+      Math.min(0.98, baseHsl.l + HOVER.tintLightnessLift),
+    );
+
     // Per-skill representative direction = centroid of its tiles, so the scroll
     // tour still faces every land.
     const centroid = new Vector3();
@@ -648,6 +659,9 @@ export function buildSkillIslands(skills: readonly SkillArea[]): SkillIslandsBui
       continentId: continent?.id ?? '',
       continentName: continent?.name ?? '',
       skillColor: baseColor,
+      // US3 (D4 close-tint) / US4 (D3 radial lift + label anchor direction).
+      hoverTint: hoverTint.getHex(),
+      radialDir: centroid.clone(),
     };
     meshes.push(mesh);
   });

@@ -13,6 +13,7 @@ import type { SkillArea } from '../data/skills';
 import { CAMERA, PLANET, RENDERER } from './config';
 import { Planet } from './Planet';
 import { PlanetControls } from './PlanetControls';
+import type { LandLabels } from './landLabels';
 
 /**
  * Owns the renderer, scene, camera, lights and the render loop. The canvas
@@ -28,6 +29,8 @@ export class Experience {
   private readonly renderer: WebGLRenderer;
   private readonly scene = new Scene();
   private readonly clock = new Clock();
+  /** US4: floating land labels — created by the boot owner, ticked here. */
+  private labels: LandLabels | null = null;
 
 
   constructor(canvas: HTMLCanvasElement, skills: readonly SkillArea[]) {
@@ -48,7 +51,11 @@ export class Experience {
 
     this.scene.add(this.planet.object3D, ...this.createLights());
 
-    this.controls = new PlanetControls({ domElement: canvas, target: this.planet.controlsTarget });
+    this.controls = new PlanetControls({
+      domElement: canvas,
+      yawTarget: this.planet.controlsTarget,
+      pitchTarget: this.planet.tiltTarget,
+    });
 
     this.handleResize();
     window.addEventListener('resize', this.handleResize);
@@ -65,10 +72,17 @@ export class Experience {
     this.planet.setReducedMotion(reduced);
   }
 
+  /** US4 / contracts C3: attach floating land labels; updated every frame. */
+  attachLabels(labels: LandLabels): void {
+    this.labels = labels;
+  }
+
   dispose(): void {
     this.renderer.setAnimationLoop(null);
     window.removeEventListener('resize', this.handleResize);
     this.controls.dispose();
+    this.labels?.dispose();
+    this.labels = null;
     this.planet.dispose();
     this.renderer.dispose();
   }
@@ -86,6 +100,7 @@ export class Experience {
     const deltaTime = Math.min(this.clock.getDelta(), 0.05);
     this.controls.update(deltaTime);
     this.planet.update(deltaTime);
+    this.labels?.update(this.camera);
     this.renderer.render(this.scene, this.camera);
   };
 
